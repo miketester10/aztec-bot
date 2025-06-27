@@ -64,7 +64,9 @@ export class ValidatorHandler {
     }
   }
 
-  createMessageForTelegram(result: ValidatorStatsResponse): FormattableString {
+  createFormattedMessageForValidatorStats(
+    result: ValidatorStatsResponse
+  ): FormattableString {
     let status = "";
     switch (result.status) {
       case validatorStatus.ACTIVE:
@@ -137,6 +139,65 @@ export class ValidatorHandler {
       } 
 
     `)}`;
+
+    return message;
+  }
+
+  createFormattedMessageForEpochStats(
+    result: CurrentEpochStatsResponse
+  ): FormattableString {
+    const attestationSuccessRate = (
+      (result.currentEpochMetrics.successCount /
+        (result.currentEpochMetrics.successCount +
+          result.currentEpochMetrics.missCount)) *
+      100
+    ).toFixed(2);
+
+    const attestationMissRate = (100 - Number(attestationSuccessRate)).toFixed(
+      2
+    );
+
+    const proposalSuccessRate = (
+      (result.currentEpochMetrics.epochBlockProducedVolume /
+        (result.currentEpochMetrics.epochBlockProducedVolume +
+          result.currentEpochMetrics.epochBlockMissedVolume)) *
+      100
+    ).toFixed(2);
+
+    const proposalMissRate = (100 - Number(proposalSuccessRate)).toFixed(2);
+
+    const message = format`${blockquote(
+      format`🔷 ${bold("EPOCH DETAILS")} 🔷
+
+      ${bold("Current Epoch:")} ${code(result.currentEpochMetrics.epochNumber)}
+
+      📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
+      ✅ ${bold("Successful:")} ${code(result.currentEpochMetrics.successCount)}
+      ❌ ${bold("Missed:")} ${code(result.currentEpochMetrics.missCount)}
+      📈 ${bold("Success Rate:")} ${code(`${attestationSuccessRate}%`)}
+      📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
+
+      📊 ${bold("PROPOSAL PERFORMANCE")} 📊     
+      ✅ ${bold("Successful (Proposed/Mined):")} ${code(
+        `${result.currentEpochMetrics.epochBlockProducedVolume}`
+      )}
+      ❌ ${bold("Missed:")} ${code(
+        `${result.currentEpochMetrics.epochBlockMissedVolume}`
+      )}
+      📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
+      📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
+
+      🌐 ${bold("NETWORK INFO")} 🌐
+      🟢 ${bold("Total Active Validators:")} ${code(
+        `${result.totalActiveValidators}`
+      )}
+      🔴 ${bold("Total Inactive Validators:")} ${code(
+        `${result.totalInactiveValidators}`
+      )}
+      
+      
+      `
+    )}`;
 
     return message;
   }

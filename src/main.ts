@@ -42,7 +42,8 @@ bot.command("validator", async (ctx: MessageContext<Bot>) => {
   }
   try {
     const result = await validatorHandler.getValidatorStats(address);
-    const message = validatorHandler.createMessageForTelegram(result);
+    const message =
+      validatorHandler.createFormattedMessageForValidatorStats(result);
     await ctx.reply(message);
   } catch (error) {
     const messageError = format`${code(validatorHandler.handleError(error))}`;
@@ -52,8 +53,15 @@ bot.command("validator", async (ctx: MessageContext<Bot>) => {
 
 bot.command("epoch", async (ctx: MessageContext<Bot>) => {
   await ctx.sendChatAction("typing");
-  const message = format`${code("To be implemented.")}`;
-  await ctx.reply(message);
+  try {
+    const result = await validatorHandler.getCurrentEpochStats();
+    const message =
+      validatorHandler.createFormattedMessageForEpochStats(result);
+    await ctx.reply(message);
+  } catch (error) {
+    const messageError = format`${code(validatorHandler.handleError(error))}`;
+    await ctx.reply(messageError);
+  }
 });
 bot.command("start", async (ctx: MessageContext<Bot>) => await start(ctx));
 bot.command("help", async (ctx: MessageContext<Bot>) => await help(ctx));

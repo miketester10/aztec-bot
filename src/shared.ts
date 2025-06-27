@@ -41,7 +41,7 @@ export class ValidatorHandler {
       }
 
       logger.info(`Validator status: ${result.data.status}`);
-      
+
       return result.data;
     } catch (error) {
       throw error;
@@ -115,7 +115,7 @@ export class ValidatorHandler {
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(result.totalAttestationsSucceeded)}
       ❌ ${bold("Missed:")} ${code(result.totalAttestationsMissed)}
-      📈 ${bold("Success Rate:")} ${code(attestationSuccessRate)}
+      📈 ${bold("Success Rate:")} ${code(`${attestationSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     

@@ -69,9 +69,15 @@ export class ValidatorHandler {
         break;
     }
 
-    const attestationMissRate = (
-      100 - Number(result.attestationSuccess.slice(0, 4))
+    const attestationSuccessRate = (
+      (result.totalAttestationsSucceeded /
+        (result.totalAttestationsSucceeded + result.totalAttestationsMissed)) *
+      100
     ).toFixed(1);
+
+    const attestationMissRate = (100 - Number(attestationSuccessRate)).toFixed(
+      1
+    );
 
     const proposalSuccessRate = (
       ((result.totalBlocksProposed + result.totalBlocksMined) /
@@ -98,7 +104,7 @@ export class ValidatorHandler {
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(result.totalAttestationsSucceeded)}
       ❌ ${bold("Missed:")} ${code(result.totalAttestationsMissed)}
-      📈 ${bold("Success Rate:")} ${code(result.attestationSuccess)}
+      📈 ${bold("Success Rate:")} ${code(attestationSuccessRate)}
       📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     

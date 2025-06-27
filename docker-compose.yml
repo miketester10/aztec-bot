@@ -1,6 +1,6 @@
 services:
   AztecBot:
-    image: node:24.2.0-alpine
+    image: node:20
     container_name: AztecBot
     working_dir: /app
     volumes:

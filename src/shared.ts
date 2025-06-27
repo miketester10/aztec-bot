@@ -123,12 +123,12 @@ export class ValidatorHandler {
         ? customErrorMessage
         : error.message;
       logger.error(`Axios Error: ${errorMessage}`);
-      // this.sendErrorMessage();
+
       return customErrorMessage || defaultErrorMessage;
     }
     const unknownErrorMessage = (error as Error).message;
     logger.error(`Unknown Error: ${unknownErrorMessage}`);
-    // this.sendErrorMessage();
+
     return defaultErrorMessage;
   }
 }

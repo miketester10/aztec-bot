@@ -29,14 +29,26 @@ export class ValidatorHandler {
       const result = await axios.get<ValidatorStatsResponse>(
         `${API.VALIDATOR_STATS}/${validatorAddress}`
       );
+
+      try {
+        const epochStats = await this.getCurrentEpochStats();
+        result.data.currentEpochStats = epochStats;
+      } catch (error) {
+        const unknownError = error as Error;
+        logger.error(
+          `ERROR IN getCurrentEpochStats(): ${unknownError.message}`
+        );
+      }
+
       logger.info(`Validator status: ${result.data.status}`);
+      
       return result.data;
     } catch (error) {
       throw error;
     }
   }
 
-  async getCurrentEpochStats(): Promise<void> {
+  async getCurrentEpochStats(): Promise<CurrentEpochStatsResponse> {
     try {
       const result = await axios.get<CurrentEpochStatsResponse>(
         API.CURRENT_EPOCH_STATS
@@ -46,13 +58,7 @@ export class ValidatorHandler {
         `Current epoch: ${result.data.currentEpochMetrics.epochNumber}`
       );
 
-      logger.info(
-        `Total active validators: ${result.data.totalActiveValidators}`
-      );
-
-      logger.info(
-        `Total inactive validators: ${result.data.totalInactiveValidators}`
-      );
+      return result.data;
     } catch (error) {
       throw error;
     }
@@ -68,6 +74,11 @@ export class ValidatorHandler {
         status = validatorStatusMessage.EXITED;
         break;
     }
+
+    const totalActiveValidators =
+      result.currentEpochStats?.totalActiveValidators;
+    const totalInactiveValidators =
+      result.currentEpochStats?.totalInactiveValidators;
 
     const attestationSuccessRate = (
       (result.totalAttestationsSucceeded /
@@ -114,6 +125,17 @@ export class ValidatorHandler {
       ❌ ${bold("Missed:")} ${code(`${result.totalBlocksMissed}`)}
       📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
+
+      ${
+        totalActiveValidators && totalInactiveValidators
+          ? format`🌐 ${bold("NETWORK INFO")} 🌐
+      🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
+      🔴 ${bold("Total Inactive Validators:")} ${code(
+              `${totalInactiveValidators}`
+            )}`
+          : ""
+      } 
+
     `)}`;
 
     return message;

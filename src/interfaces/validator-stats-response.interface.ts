@@ -1,3 +1,5 @@
+import { CurrentEpochStatsResponse } from "./current-epoch-stats-response.interface";
+
 export interface ValidatorStatsResponse {
   index: string;
   address: string;
@@ -15,6 +17,7 @@ export interface ValidatorStatsResponse {
   totalBlocksMissed: number;
   totalParticipatingEpochs: number;
   epochPerformanceHistory: EpochPerformanceHistory[];
+  currentEpochStats?: CurrentEpochStatsResponse;
 }
 
 interface RecentAttestation {

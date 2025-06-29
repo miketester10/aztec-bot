@@ -8,6 +8,7 @@ import { config } from "dotenv";
 
 config();
 
+const NODE_ENV: string = process.env.NODE_ENV!;
 const BOT_TOKEN: string = process.env.BOT_TOKEN!;
 const serverHandler: ServerHandler = ServerHandler.getInstance();
 const commandsHandler: CommandsHandler = CommandsHandler.getInstance();
@@ -16,6 +17,7 @@ const commandsHandler: CommandsHandler = CommandsHandler.getInstance();
 const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
   if (!(await commandsHandler.setCommandsMenu(bot))) {
     logger.warn("**** Bot Started without set commands Menu ****");
+    return;
   }
   logger.info("**** Bot Started ****");
 });
@@ -32,21 +34,26 @@ bot.command("help", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleHelpCommand(ctx);
 });
 
-// Start server and bot
-serverHandler
-  .startServer(bot)
-  .then((server: Server) => {
-    bot.start({
-      webhook: {
-        url: `${serverHandler.WEBHOOK_URL}/${serverHandler.WEBHOOK_PATH}`,
-      },
+if (NODE_ENV !== "production") {
+  // Start bot with long polling
+  bot.start();
+} else {
+  // Start server and bot with Webhook
+  serverHandler
+    .startServer(bot)
+    .then((server: Server) => {
+      bot.start({
+        webhook: {
+          url: `${serverHandler.WEBHOOK_URL}/${serverHandler.WEBHOOK_PATH}`,
+        },
+      });
+      // Handle SIGINT and SIGTERM
+      setupGracefulShutdown(bot, server);
+    })
+    .catch((error) => {
+      const unknownError = error as Error;
+      logger.error(
+        `Unknown Error while starting server: ${unknownError.message}`
+      );
     });
-    // Handle SIGINT and SIGTERM
-    setupGracefulShutdown(bot, server);
-  })
-  .catch((error) => {
-    const unknownError = error as Error;
-    logger.error(
-      `Unknown Error while starting server: ${unknownError.message}`
-    );
-  });
+}

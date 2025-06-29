@@ -36,7 +36,7 @@ export class ServerHandler {
 
     // Start server
     const server = this.app.listen(this.PORT, () => {
-      logger.info(`## Server listening on port ${this.PORT} ##`);
+      logger.info(`## Server listening on port ${this.PORT} [WEBHOOK MODE] ##`);
     });
 
     return server;

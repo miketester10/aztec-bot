@@ -1,13 +1,18 @@
-import { blockquote, bold, Bot, code, format, MessageContext } from "gramio";
+import { Bot, code, format, MessageContext, webhookHandler } from "gramio";
 import { ValidatorHandler } from "./shared";
 import { config } from "dotenv";
 import { help, start } from "./info";
 import { logger } from "./logger/logger";
+import express, { Request, Response, NextFunction } from "express";
 config();
 
 const validatorHandler = ValidatorHandler.getInstance();
-const TOKEN = process.env.BOT_TOKEN!;
-const bot = new Bot(TOKEN).onStart(async (ctx) => {
+const BOT_TOKEN = process.env.BOT_TOKEN!;
+const WEBHOOK_URL = process.env.WEBHOOK_URL!;
+const WEBHOOK_PATH = process.env.WEBHOOK_PATH!;
+const PORT = Number(process.env.PORT);
+
+const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
   try {
     const commands_set = await bot.api.setMyCommands({
       commands: [
@@ -30,7 +35,6 @@ const bot = new Bot(TOKEN).onStart(async (ctx) => {
     logger.error(`Unknown Error: ${unknownError.message}`);
   }
 });
-bot.start();
 
 bot.command("validator", async (ctx: MessageContext<Bot>) => {
   await ctx.sendChatAction("typing");
@@ -68,3 +72,21 @@ bot.command("help", async (ctx: MessageContext<Bot>) => await help(ctx));
 
 process.once("SIGINT", () => bot.stop());
 process.once("SIGTERM", () => bot.stop());
+
+/* Express Server for using webhook */
+const app = express();
+
+// Webhook route
+app.post(`/${WEBHOOK_PATH}`, webhookHandler(bot, "express"));
+
+// Start server
+app.listen(PORT, () => {
+  logger.info(`Server listening on port ${PORT}`);
+});
+
+// Start bot with webhook
+bot.start({
+  webhook: {
+    url: `${WEBHOOK_URL}/${WEBHOOK_PATH}`,
+  },
+});

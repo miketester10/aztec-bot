@@ -15,7 +15,7 @@ const commandsHandler = CommandsHandler.getInstance();
 // Create bot and set commands
 const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
   if (!(await commandsHandler.setCommandsMenu(bot))) {
-    logger.info("**** Bot Started without set commands Menu ****");
+    logger.warn("**** Bot Started without set commands Menu ****");
   }
   logger.info("**** Bot Started ****");
 });

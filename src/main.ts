@@ -14,11 +14,10 @@ const commandsHandler = CommandsHandler.getInstance();
 
 // Create bot and set commands
 const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
-  if (await commandsHandler.setCommands(bot)) {
-    logger.info("**** Bot Started ****");
-    return
+  if (!(await commandsHandler.setCommandsMenu(bot))) {
+    logger.info("**** Bot Started without set commands Menu ****");
   }
-  logger.info("**** Bot Started without set commands ****");
+  logger.info("**** Bot Started ****");
 });
 bot.command("validator", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleValidatorCommand(ctx);

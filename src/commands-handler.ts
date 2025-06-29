@@ -16,7 +16,7 @@ export class CommandsHandler {
     return CommandsHandler._instance;
   }
 
-  async setCommands(bot: Bot): Promise<boolean> {
+  async setCommandsMenu(bot: Bot): Promise<boolean> {
     try {
       const commands_set = await bot.api.setMyCommands({
         commands: [

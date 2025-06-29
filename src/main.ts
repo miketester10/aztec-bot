@@ -8,9 +8,9 @@ import { config } from "dotenv";
 
 config();
 
-const BOT_TOKEN = process.env.BOT_TOKEN!;
-const serverHandler = ServerHandler.getInstance();
-const commandsHandler = CommandsHandler.getInstance();
+const BOT_TOKEN: string = process.env.BOT_TOKEN!;
+const serverHandler: ServerHandler = ServerHandler.getInstance();
+const commandsHandler: CommandsHandler = CommandsHandler.getInstance();
 
 // Create bot and set commands
 const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {

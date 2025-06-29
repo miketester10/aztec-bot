@@ -7,10 +7,10 @@ config();
 
 export class ServerHandler {
   private static _instance: ServerHandler;
-  private readonly app = express();
-  readonly WEBHOOK_URL = process.env.WEBHOOK_URL!;
-  readonly WEBHOOK_PATH = process.env.WEBHOOK_PATH!;
-  readonly PORT = Number(process.env.PORT);
+  private readonly app: express.Application = express();
+  readonly WEBHOOK_URL: string = process.env.WEBHOOK_URL!;
+  readonly WEBHOOK_PATH: string = process.env.WEBHOOK_PATH!;
+  readonly PORT: number = Number(process.env.PORT);
 
   private constructor() {}
 

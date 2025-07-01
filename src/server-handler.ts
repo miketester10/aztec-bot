@@ -58,32 +58,28 @@ export class ServerHandler {
     next: NextFunction
   ): void {
     const tokenFromHeader = req.header("x-telegram-bot-api-secret-token");
+    const { message } = req.body;
 
     if (!tokenFromHeader || tokenFromHeader !== this.SECRET_TOKEN) {
       logger.warn(
-        "Unauthorized webhook request: missing/invalid Secret Token."
+        "Unauthorized webhook request: missing or invalid Secret Token."
       );
-      res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized." });
       return;
     }
 
-    if (!(req.body && req.body.message)) {
-      logger.warn("Received webhook update from unknown Client.");
-    } else {
-      logger.info(
-        `Received webhook update from Telegram: ${JSON.stringify(
-          {
-            firstname: req.body.message.from?.first_name,
-            username: req.body.message.from?.username,
-            language: req.body.message.from?.language_code,
-            text: req.body.message.text,
-          },
-          null,
-          2
-        )}`
-      );
-    }
-
+    logger.info(
+      `Received webhook update: ${JSON.stringify(
+        {
+          firstname: message?.from?.first_name,
+          username: message?.from?.username,
+          language: message?.from?.language_code,
+          text: message?.text,
+        },
+        null,
+        2
+      )}`
+    );
     next();
   }
 }

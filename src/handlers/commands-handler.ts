@@ -1,5 +1,5 @@
 import { blockquote, Bot, code, format, link, MessageContext } from "gramio";
-import { logger } from "./logger/logger";
+import { logger } from "../logger/logger";
 import { ValidatorHandler } from "./validator-handler";
 
 export class CommandsHandler {

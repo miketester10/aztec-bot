@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
-import { logger } from "./logger/logger";
+import { logger } from "../logger/logger";
 import { Bot, TelegramUpdate, webhookHandler } from "gramio";
 import { Server } from "http";
 import { config } from "dotenv";
@@ -42,14 +42,18 @@ export class ServerHandler {
       webhookHandler(bot, "express", this.SECRET_TOKEN)
     );
 
-    // Start server
-    const server = this.app.listen(this.PORT, () => {
-      logger.info(
-        `## [WEBHOOK MODE] Server listening on port ${this.PORT}  ##`
-      );
-    });
+    // Start the server and resolve the Promise only when the server is ready to receive requests
+    return new Promise<Server>((resolve, reject) => {
+      const server = this.app.listen(this.PORT, () => {
+        logger.info(`✅ Webhook server ready on port ${this.PORT}`);
+        resolve(server);
+      });
 
-    return server;
+      server.on("error", (error) => {
+        logger.error(`❌ Server failed to start: ${error.message}`);
+        reject(error);
+      });
+    });
   }
 
   private webhookMiddleware(

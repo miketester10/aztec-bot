@@ -1,5 +1,5 @@
 import { Bot } from "gramio";
-import { logger } from "./logger/logger";
+import { logger } from "../logger/logger";
 import { Server } from "http";
 
 export function setupGracefulShutdown(bot: Bot, server: Server) {

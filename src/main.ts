@@ -1,9 +1,8 @@
-import { Bot, MessageContext, webhookHandler } from "gramio";
-import { ServerHandler } from "./server-handler";
-import { CommandsHandler } from "./commands-handler";
+import { Bot, MessageContext } from "gramio";
+import { CommandsHandler } from "./handlers/commands-handler";
+import { ServerHandler } from "./handlers/server-handler";
+import { setupGracefulShutdown } from "./handlers/shutdown-handler";
 import { logger } from "./logger/logger";
-import { Server } from "http";
-import { setupGracefulShutdown } from "./shutdown-handler";
 import { config } from "dotenv";
 
 config();
@@ -17,10 +16,10 @@ const commandsHandler: CommandsHandler = CommandsHandler.getInstance();
 // Create bot and set commands
 const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
   if (!(await commandsHandler.setCommandsMenu(bot))) {
-    logger.warn("**** Bot Started without set commands Menu ****");
+    logger.warn("⚠️ Bot Started without set commands Menu");
     return;
   }
-  logger.info("**** Bot Started ****");
+  logger.info("✅ Bot Started");
 });
 bot.command("validator", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleValidatorCommand(ctx);
@@ -35,27 +34,28 @@ bot.command("help", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleHelpCommand(ctx);
 });
 
-if (NODE_ENV !== "production") {
-  // Start bot with long polling
-  bot.start();
-} else {
-  // Start server and bot with Webhook
-  serverHandler
-    .startServer(bot)
-    .then((server: Server) => {
-      bot.start({
-        webhook: {
-          url: `${serverHandler.WEBHOOK_URL}/${serverHandler.WEBHOOK_PATH}`,
-          secret_token: serverHandler.SECRET_TOKEN,
-        },
-      });
-      // Handle SIGINT and SIGTERM
-      setupGracefulShutdown(bot, server);
-    })
-    .catch((error) => {
-      const unknownError = error as Error;
-      logger.error(
-        `Unknown Error while starting server: ${unknownError.message}`
-      );
+const main = async () => {
+  if (NODE_ENV !== "production") {
+    // Start bot with long polling
+    bot.start();
+    return;
+  }
+
+  try {
+    // Start server and bot with Webhook
+    const server = await serverHandler.startServer(bot);
+    bot.start({
+      webhook: {
+        url: `${serverHandler.WEBHOOK_URL}/${serverHandler.WEBHOOK_PATH}`,
+        secret_token: serverHandler.SECRET_TOKEN,
+      },
     });
-}
+    // Handle SIGINT and SIGTERM
+    setupGracefulShutdown(bot, server);
+  } catch (error) {
+    logger.error(
+      `Unknown Error while starting server: ${(error as Error).message}`
+    );
+  }
+};
+main();

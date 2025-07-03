@@ -1,14 +1,14 @@
 import axios, { AxiosError } from "axios";
-import { ValidatorStatsResponse } from "./interfaces/validator-stats-response.interface";
-import { CurrentEpochStatsResponse } from "./interfaces/current-epoch-stats-response.interface";
-import { ErrorResponse } from "./interfaces/error-response.interface";
-import { API } from "./consts/api";
-import { logger } from "./logger/logger";
+import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
+import { CurrentEpochStatsResponse } from "../interfaces/current-epoch-stats-response.interface";
+import { ErrorResponse } from "../interfaces/error-response.interface";
+import { API } from "../consts/api";
+import { logger } from "../logger/logger";
 import { blockquote, bold, code, format, FormattableString } from "gramio";
 import {
   validatorStatus,
   validatorStatusMessage,
-} from "./consts/validator-status";
+} from "../consts/validator-status";
 
 export class ValidatorHandler {
   private static _instance: ValidatorHandler;

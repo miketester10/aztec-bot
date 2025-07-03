@@ -3,7 +3,6 @@ import { CommandsHandler } from "./handlers/commands-handler";
 import { ServerHandler } from "./handlers/server-handler";
 import { logger } from "./logger/logger";
 import { config } from "dotenv";
-import { Server } from "http";
 
 config();
 

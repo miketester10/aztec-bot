@@ -9,7 +9,6 @@ config();
 
 const NODE_ENV: string = process.env.NODE_ENV!;
 const BOT_TOKEN: string = process.env.BOT_TOKEN!;
-const SECRET_TOKEN: string = process.env.SECRET_TOKEN!;
 const serverHandler: ServerHandler = ServerHandler.getInstance();
 const commandsHandler: CommandsHandler = CommandsHandler.getInstance();
 

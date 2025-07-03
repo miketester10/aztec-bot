@@ -112,7 +112,6 @@ ${blockquote(`⚠️ For more information contact the developer:
 
   async handleHelpCommand(ctx: MessageContext<Bot>): Promise<void> {
     await ctx.sendChatAction("typing");
-    await ctx.sendChatAction("typing");
     const message = format`
 📚 List of Commands:
 

@@ -1,9 +1,9 @@
 import { Bot, MessageContext } from "gramio";
 import { CommandsHandler } from "./handlers/commands-handler";
 import { ServerHandler } from "./handlers/server-handler";
-import { setupGracefulShutdown } from "./handlers/shutdown-handler";
 import { logger } from "./logger/logger";
 import { config } from "dotenv";
+import { Server } from "http";
 
 config();
 
@@ -34,26 +34,23 @@ bot.command("help", async (ctx: MessageContext<Bot>) => {
 });
 
 const main = async () => {
-  if (NODE_ENV !== "production") {
-    // Start bot with long polling
-    bot.start();
-    return;
-  }
-
   try {
+    if (NODE_ENV !== "production") {
+      // Start bot with long polling
+      await bot.start();
+      return;
+    }
     // Start server and bot with Webhook
-    const server = await serverHandler.startServer(bot);
-    bot.start({
+    await serverHandler.startServer(bot);
+    await bot.start({
       webhook: {
         url: `${serverHandler.WEBHOOK_URL}/${serverHandler.WEBHOOK_PATH}`,
         secret_token: serverHandler.SECRET_TOKEN,
       },
     });
-    // Handle SIGINT and SIGTERM
-    setupGracefulShutdown(bot, server);
   } catch (error) {
     logger.error(
-      `Unknown Error while starting server: ${(error as Error).message}`
+      `Unknown Error while starting bot or server: ${(error as Error).message}`
     );
   }
 };

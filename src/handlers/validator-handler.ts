@@ -203,7 +203,7 @@ export class ValidatorHandler {
   }
 
   handleError(error: unknown): string {
-    const defaultErrorMessage = "An error occurred. Please try again.";
+    const defaultErrorMessage = "An error occurred. Please try again later.";
 
     if (axios.isAxiosError(error)) {
       const customErrorMessage = (error as AxiosError<ErrorResponse>).response

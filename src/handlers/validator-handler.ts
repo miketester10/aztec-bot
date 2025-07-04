@@ -165,7 +165,7 @@ export class ValidatorHandler {
     rawData: TopValidatorsResponse
   ): FormattableString {
     const message = format`${blockquote(
-      format`🔷 ${bold("TOP 10 VALIDATORS ALL TIME")} 🔷
+      format`🏆 ${bold("TOP 10 VALIDATORS ALL TIME")} 🏆
     
 ${code(
   rawData.validators

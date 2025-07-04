@@ -1,9 +1,9 @@
 import axios, { AxiosError } from "axios";
 import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
 import {
-  Top10Validator,
-  Validator,
-} from "../interfaces/top-10-validators.interface";
+  TopValidatorsResponse,
+  TopValidator,
+} from "../interfaces/top-validators-response.interface";
 import { CurrentEpochStatsResponse } from "../interfaces/current-epoch-stats-response.interface";
 import { ErrorResponse } from "../interfaces/error-response.interface";
 import { API } from "../consts/api";
@@ -52,11 +52,11 @@ export class ValidatorHandler {
     }
   }
 
-  async getTop10Validators(): Promise<Top10Validator> {
+  async getTop10Validators(): Promise<TopValidatorsResponse> {
     try {
       const currentEpoch = (await this.getCurrentEpochStats())
         .currentEpochMetrics.epochNumber;
-      const result = await axios.get<Top10Validator>(
+      const result = await axios.get<TopValidatorsResponse>(
         `${API.TOP_VALIDATORS_API}?startEpoch=1&endEpoch=${currentEpoch}`
       );
       return result.data;
@@ -161,19 +161,23 @@ export class ValidatorHandler {
   }
 
   createFormattedMessageForTop10Validators(
-    result: Top10Validator
+    result: TopValidatorsResponse
   ): FormattableString {
     const message = format`${blockquote(
       format`🔷 ${bold("TOP 10 VALIDATORS ALL TIME")} 🔷
-      
-      ${code(
-        result.validators.map(
-          (validators: Validator) => `${validators.address}\n`
-        )
-      )}
-      
-      
-      `
+    
+${code(
+  result.validators
+    .map((validator: TopValidator, _index: number) => {
+      if (_index === 0) return `🥇 ${validator.address}`;
+      if (_index === 1) return `🥈 ${validator.address}`;
+      if (_index === 2) return `🥉 ${validator.address}`;
+      return `🔹${validator.address}`;
+    })
+    .join("\n")
+)}
+    
+`
     )}`;
     return message;
   }

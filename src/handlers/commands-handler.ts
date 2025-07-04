@@ -143,7 +143,7 @@ ${blockquote(`⚠️ For more information contact the developer:
   async handleHelpCommand(ctx: MessageContext<Bot>): Promise<void> {
     await ctx.sendChatAction("typing");
     const message = format`
-📚 List of Commands:
+  ${bold("📚 LIST OF COMMANDS 📚")}
 
 ${blockquote(
   format`🔹${code("/validator <wallet_address>")} - to receive validator stats

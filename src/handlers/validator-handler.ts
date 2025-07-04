@@ -82,10 +82,10 @@ export class ValidatorHandler {
   }
 
   createFormattedMessageForValidatorStats(
-    result: ValidatorStatsResponse
+    rawData: ValidatorStatsResponse
   ): FormattableString {
     let status = "";
-    switch (result.status) {
+    switch (rawData.status) {
       case validatorStatus.ACTIVE:
         status = validatorStatusMessage.ACTIVE;
         break;
@@ -95,13 +95,14 @@ export class ValidatorHandler {
     }
 
     const totalActiveValidators =
-      result.currentEpochStats?.totalActiveValidators;
+      rawData.currentEpochStats?.totalActiveValidators;
     const totalInactiveValidators =
-      result.currentEpochStats?.totalInactiveValidators;
+      rawData.currentEpochStats?.totalInactiveValidators;
 
     const attestationSuccessRate = (
-      (result.totalAttestationsSucceeded /
-        (result.totalAttestationsSucceeded + result.totalAttestationsMissed)) *
+      (rawData.totalAttestationsSucceeded /
+        (rawData.totalAttestationsSucceeded +
+          rawData.totalAttestationsMissed)) *
       100
     ).toFixed(1);
 
@@ -110,10 +111,10 @@ export class ValidatorHandler {
     );
 
     const proposalSuccessRate = (
-      ((result.totalBlocksProposed + result.totalBlocksMined) /
-        (result.totalBlocksProposed +
-          result.totalBlocksMined +
-          result.totalBlocksMissed)) *
+      ((rawData.totalBlocksProposed + rawData.totalBlocksMined) /
+        (rawData.totalBlocksProposed +
+          rawData.totalBlocksMined +
+          rawData.totalBlocksMissed)) *
       100
     ).toFixed(1);
 
@@ -126,22 +127,22 @@ export class ValidatorHandler {
       ${bold("Status:")} ${status} 
 
       📋 ${bold("BASIC INFO")} 📋
-      🔑 ${bold("Address:")} ${code(result.address)}
-      💰 ${bold("Staked Amount:")} ${code(result.balance)}
-      👤 ${bold("Proposer Address:")} ${code(result.proposerAddress)}
-      💼 ${bold("Withdrawer Address:")} ${code(result.withdrawalCredentials)}
+      🔑 ${bold("Address:")} ${code(rawData.address)}
+      💰 ${bold("Staked Amount:")} ${code(rawData.balance)}
+      👤 ${bold("Proposer Address:")} ${code(rawData.proposerAddress)}
+      💼 ${bold("Withdrawer Address:")} ${code(rawData.withdrawalCredentials)}
 
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
-      ✅ ${bold("Successful:")} ${code(result.totalAttestationsSucceeded)}
-      ❌ ${bold("Missed:")} ${code(result.totalAttestationsMissed)}
+      ✅ ${bold("Successful:")} ${code(rawData.totalAttestationsSucceeded)}
+      ❌ ${bold("Missed:")} ${code(rawData.totalAttestationsMissed)}
       📈 ${bold("Success Rate:")} ${code(`${attestationSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     
       ✅ ${bold("Successful (Proposed/Mined):")} ${code(
-      `${result.totalBlocksProposed + result.totalBlocksMined}`
+      `${rawData.totalBlocksProposed + rawData.totalBlocksMined}`
     )}
-      ❌ ${bold("Missed:")} ${code(`${result.totalBlocksMissed}`)}
+      ❌ ${bold("Missed:")} ${code(`${rawData.totalBlocksMissed}`)}
       📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
 
@@ -161,13 +162,13 @@ export class ValidatorHandler {
   }
 
   createFormattedMessageForTop10Validators(
-    result: TopValidatorsResponse
+    rawData: TopValidatorsResponse
   ): FormattableString {
     const message = format`${blockquote(
       format`🔷 ${bold("TOP 10 VALIDATORS ALL TIME")} 🔷
     
 ${code(
-  result.validators
+  rawData.validators
     .map((validator: TopValidator, _index: number) => {
       if (_index === 0) return `🥇${validator.address}`;
       if (_index === 1) return `🥈${validator.address}`;
@@ -183,12 +184,12 @@ ${code(
   }
 
   createFormattedMessageForEpochStats(
-    result: CurrentEpochStatsResponse
+    rawData: CurrentEpochStatsResponse
   ): FormattableString {
     const attestationSuccessRate = (
-      (result.currentEpochMetrics.successCount /
-        (result.currentEpochMetrics.successCount +
-          result.currentEpochMetrics.missCount)) *
+      (rawData.currentEpochMetrics.successCount /
+        (rawData.currentEpochMetrics.successCount +
+          rawData.currentEpochMetrics.missCount)) *
       100
     ).toFixed(2);
 
@@ -197,9 +198,9 @@ ${code(
     );
 
     const proposalSuccessRate = (
-      (result.currentEpochMetrics.epochBlockProducedVolume /
-        (result.currentEpochMetrics.epochBlockProducedVolume +
-          result.currentEpochMetrics.epochBlockMissedVolume)) *
+      (rawData.currentEpochMetrics.epochBlockProducedVolume /
+        (rawData.currentEpochMetrics.epochBlockProducedVolume +
+          rawData.currentEpochMetrics.epochBlockMissedVolume)) *
       100
     ).toFixed(2);
 
@@ -208,30 +209,32 @@ ${code(
     const message = format`${blockquote(
       format`🔷 ${bold("EPOCH DETAILS")} 🔷
 
-      ${bold("Current Epoch:")} ${code(result.currentEpochMetrics.epochNumber)}
+      ${bold("Current Epoch:")} ${code(rawData.currentEpochMetrics.epochNumber)}
 
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
-      ✅ ${bold("Successful:")} ${code(result.currentEpochMetrics.successCount)}
-      ❌ ${bold("Missed:")} ${code(result.currentEpochMetrics.missCount)}
+      ✅ ${bold("Successful:")} ${code(
+        rawData.currentEpochMetrics.successCount
+      )}
+      ❌ ${bold("Missed:")} ${code(rawData.currentEpochMetrics.missCount)}
       📈 ${bold("Success Rate:")} ${code(`${attestationSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     
       ✅ ${bold("Successful (Proposed/Mined):")} ${code(
-        `${result.currentEpochMetrics.epochBlockProducedVolume}`
+        `${rawData.currentEpochMetrics.epochBlockProducedVolume}`
       )}
       ❌ ${bold("Missed:")} ${code(
-        `${result.currentEpochMetrics.epochBlockMissedVolume}`
+        `${rawData.currentEpochMetrics.epochBlockMissedVolume}`
       )}
       📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
 
       🌐 ${bold("NETWORK INFO")} 🌐
       🟢 ${bold("Total Active Validators:")} ${code(
-        `${result.totalActiveValidators}`
+        `${rawData.totalActiveValidators}`
       )}
       🔴 ${bold("Total Inactive Validators:")} ${code(
-        `${result.totalInactiveValidators}`
+        `${rawData.totalInactiveValidators}`
       )}
       
       

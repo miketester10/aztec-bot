@@ -22,6 +22,9 @@ const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
 bot.command("validator", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleValidatorCommand(ctx);
 });
+bot.command("top10", async (ctx: MessageContext<Bot>) => {
+  await commandsHandler.handleTop10Command(ctx);
+});
 bot.command("epoch", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleEpochCommand(ctx);
 });

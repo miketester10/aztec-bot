@@ -1,20 +1,11 @@
+import { ValidatorBase } from "./validator-base.interface";
 import { CurrentEpochStatsResponse } from "./current-epoch-stats-response.interface";
 
-export interface ValidatorStatsResponse {
-  index: string;
-  address: string;
-  status: string;
-  balance: string;
-  attestationSuccess: string;
+export interface ValidatorStatsResponse extends ValidatorBase {
   proposerAddress: string;
   withdrawalCredentials: string;
   recentAttestations: RecentAttestation[];
   proposalHistory: ProposalHistory[];
-  totalAttestationsSucceeded: number;
-  totalAttestationsMissed: number;
-  totalBlocksProposed: number;
-  totalBlocksMined: number;
-  totalBlocksMissed: number;
   totalParticipatingEpochs: number;
   epochPerformanceHistory: EpochPerformanceHistory[];
   currentEpochStats?: CurrentEpochStatsResponse;

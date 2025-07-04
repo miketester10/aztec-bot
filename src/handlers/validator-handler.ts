@@ -169,9 +169,9 @@ export class ValidatorHandler {
 ${code(
   result.validators
     .map((validator: TopValidator, _index: number) => {
-      if (_index === 0) return `🥇 ${validator.address}`;
-      if (_index === 1) return `🥈 ${validator.address}`;
-      if (_index === 2) return `🥉 ${validator.address}`;
+      if (_index === 0) return `🥇${validator.address}`;
+      if (_index === 1) return `🥈${validator.address}`;
+      if (_index === 2) return `🥉${validator.address}`;
       return `🔹${validator.address}`;
     })
     .join("\n")

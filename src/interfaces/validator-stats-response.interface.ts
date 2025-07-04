@@ -1,4 +1,4 @@
-import { ValidatorBase } from "./validator.interface";
+import { ValidatorBase } from "./validator-base.interface";
 import { CurrentEpochStatsResponse } from "./current-epoch-stats-response.interface";
 
 export interface ValidatorStatsResponse extends ValidatorBase {

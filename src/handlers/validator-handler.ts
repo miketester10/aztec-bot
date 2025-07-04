@@ -1,5 +1,9 @@
 import axios, { AxiosError } from "axios";
 import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
+import {
+  Top10Validator,
+  Validator,
+} from "../interfaces/top-10-validators.interface";
 import { CurrentEpochStatsResponse } from "../interfaces/current-epoch-stats-response.interface";
 import { ErrorResponse } from "../interfaces/error-response.interface";
 import { API } from "../consts/api";
@@ -42,6 +46,19 @@ export class ValidatorHandler {
 
       logger.info(`Validator status: ${result.data.status}`);
 
+      return result.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getTop10Validators(): Promise<Top10Validator> {
+    try {
+      const currentEpoch = (await this.getCurrentEpochStats())
+        .currentEpochMetrics.epochNumber;
+      const result = await axios.get<Top10Validator>(
+        `${API.TOP_VALIDATORS_API}?startEpoch=1&endEpoch=${currentEpoch}`
+      );
       return result.data;
     } catch (error) {
       throw error;
@@ -140,6 +157,24 @@ export class ValidatorHandler {
 
     `)}`;
 
+    return message;
+  }
+
+  createFormattedMessageForTop10Validators(
+    result: Top10Validator
+  ): FormattableString {
+    const message = format`${blockquote(
+      format`🔷 ${bold("TOP 10 VALIDATORS ALL TIME")} 🔷
+      
+      ${code(
+        result.validators.map(
+          (validators: Validator) => `${validators.address}\n`
+        )
+      )}
+      
+      
+      `
+    )}`;
     return message;
   }
 

@@ -1,4 +1,12 @@
-import { blockquote, Bot, code, format, link, MessageContext } from "gramio";
+import {
+  blockquote,
+  Bot,
+  code,
+  bold,
+  format,
+  link,
+  MessageContext,
+} from "gramio";
 import { logger } from "../logger/logger";
 import { ValidatorHandler } from "./validator-handler";
 
@@ -23,6 +31,10 @@ export class CommandsHandler {
           {
             command: "validator",
             description: "<wallet_address> - Validator stats",
+          },
+          {
+            command: "top10",
+            description: "Top 10 validators all time",
           },
           { command: "epoch", description: "Current epoch stats" },
 
@@ -61,6 +73,21 @@ export class CommandsHandler {
     }
   }
 
+  async handleTop10Command(ctx: MessageContext<Bot>): Promise<void> {
+    await ctx.sendChatAction("typing");
+    try {
+      const result = await this.validatorHandler.getTop10Validators();
+      const message =
+        this.validatorHandler.createFormattedMessageForTop10Validators(result);
+      await ctx.reply(message);
+    } catch (error) {
+      const messageError = format`${code(
+        this.validatorHandler.handleError(error)
+      )}`;
+      await ctx.reply(messageError);
+    }
+  }
+
   async handleEpochCommand(ctx: MessageContext<Bot>): Promise<void> {
     await ctx.sendChatAction("typing");
     try {
@@ -82,10 +109,13 @@ export class CommandsHandler {
 
     const message = format`
 Hi${username ? ` ${username}` : ""} 👋🏻
-I am Aztec Bot 🤖
+I am ${bold("Aztec Bot 🤖")}
 
 To receive validator stats, use:
 ${blockquote(code("/validator <wallet_address>"))}
+
+To receive top 10 validators all time, use:
+${blockquote(code("/top10"))}
 
 To receive current epoch stats, use:
 ${blockquote(code("/epoch"))}
@@ -93,7 +123,7 @@ ${blockquote(code("/epoch"))}
 To display complete list of commands, use:
 ${blockquote(code("/help"))}
 
-gAztec 💜
+${bold("gAztec 💜")}
 
 ${blockquote(`⚠️ For more information contact the developer:
 @vegeta (Discord)
@@ -117,6 +147,7 @@ ${blockquote(`⚠️ For more information contact the developer:
 
 ${blockquote(
   format`🔹${code("/validator <wallet_address>")} - to receive validator stats
+🔹${code("/top10")} - to receive top 10 validators all time
 🔹${code("/epoch")} - to receive current epoch stats
 🔹${code("/start")} - to start the bot
 🔹${code("/help")} - to receive this message

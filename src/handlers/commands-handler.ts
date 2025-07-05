@@ -181,13 +181,13 @@ ${blockquote(
     const [action, payload] = data?.split(":") || [];
 
     const callbackRouter = this.callbackRouter();
-    const handler = callbackRouter[action];
+    const actionHandler = callbackRouter[action];
 
-    if (handler) {
-      await handler(ctx, payload);
+    if (actionHandler) {
+      await actionHandler(ctx, payload);
       return;
     }
-    logger.error(`No handler found for action: ${action}`);
+    logger.error(`No actionHandler found for: ${action}`);
   }
 
   private callbackRouter(): CallbackRouter {

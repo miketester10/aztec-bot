@@ -19,6 +19,7 @@ const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
   }
   logger.info("✅ Bot Started");
 });
+// Handle Commands
 bot.command("validator", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleValidatorCommand(ctx);
 });
@@ -33,6 +34,10 @@ bot.command("start", async (ctx: MessageContext<Bot>) => {
 });
 bot.command("help", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleHelpCommand(ctx);
+});
+// Handle Callback
+bot.callbackQuery<RegExp>(/^.+$/, async (ctx) => {
+  await commandsHandler.handleCallbackCommand(ctx);
 });
 
 const main = async () => {

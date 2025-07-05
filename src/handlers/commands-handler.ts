@@ -6,9 +6,13 @@ import {
   format,
   link,
   MessageContext,
+  TelegramInlineKeyboardButton,
+  CallbackQueryShorthandContext,
 } from "gramio";
 import { logger } from "../logger/logger";
 import { ValidatorHandler } from "./validator-handler";
+import { CallbackRouter } from "../interfaces/callback-router.interface";
+import { callbackPayload } from "../consts/callback-payload";
 
 export class CommandsHandler {
   private static _instance: CommandsHandler;
@@ -79,7 +83,19 @@ export class CommandsHandler {
       const result = await this.validatorHandler.getTop10Validators();
       const message =
         this.validatorHandler.createFormattedMessageForTop10Validators(result);
-      await ctx.reply(message);
+      const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
+        [
+          {
+            text: "Rank score calculation Criteria",
+            callback_data: "info:rank_score_criteria",
+          },
+        ],
+      ];
+      await ctx.reply(message, {
+        reply_markup: {
+          inline_keyboard: inlineKeyboard,
+        },
+      });
     } catch (error) {
       const messageError = format`${code(
         this.validatorHandler.handleError(error)
@@ -155,5 +171,43 @@ ${blockquote(
 )}`;
 
     await ctx.reply(message);
+  }
+
+  async handleCallbackCommand(
+    ctx: CallbackQueryShorthandContext<Bot, RegExp>
+  ): Promise<void> {
+    const data = ctx.update?.callback_query?.data;
+    logger.info(`Callback received with data: ${data}`);
+    const [action, payload] = data?.split(":") || [];
+
+    const callbackRouter = this.callbackRouter();
+    const handler = callbackRouter[action];
+
+    if (handler) {
+      await handler(ctx, payload);
+      return;
+    }
+    logger.error(`No handler found for action: ${action}`);
+  }
+
+  private callbackRouter(): CallbackRouter {
+    const callbackRouter: CallbackRouter = {
+      info: async (ctx, payload): Promise<void> => {
+        let message;
+        switch (payload) {
+          case callbackPayload.RANK_SCORE_CRITERIA:
+            message = `Rank are based on a score that considers the following metrics:
+   
+    - Attestation Success Rate (35%)
+    - Attestation Volume (25%) 
+    - Proposal Success Rate (20%)
+    - Proposal Volume (20%)`;
+            await ctx.answerCallbackQuery({ text: message, show_alert: true });
+            break;
+        }
+      },
+    };
+
+    return callbackRouter;
   }
 }

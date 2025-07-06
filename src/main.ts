@@ -1,4 +1,8 @@
-import { Bot, CallbackQueryShorthandContext, MessageContext } from "gramio";
+import { Bot } from "gramio";
+import {
+  MyMessageContext,
+  MyCallbackQueryContext,
+} from "./interfaces/custom-context.interface";
 import { CommandsHandler } from "./handlers/commands-handler";
 import { ServerHandler } from "./handlers/server-handler";
 import { logger } from "./logger/logger";
@@ -20,28 +24,25 @@ const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
   logger.info("✅ Bot Started");
 });
 // Handle Commands
-bot.command("validator", async (ctx: MessageContext<Bot>) => {
+bot.command("validator", async (ctx: MyMessageContext) => {
   await commandsHandler.handleValidatorCommand(ctx);
 });
-bot.command("top10", async (ctx: MessageContext<Bot>) => {
+bot.command("top10", async (ctx: MyMessageContext) => {
   await commandsHandler.handleTop10Command(ctx);
 });
-bot.command("epoch", async (ctx: MessageContext<Bot>) => {
+bot.command("epoch", async (ctx: MyMessageContext) => {
   await commandsHandler.handleEpochCommand(ctx);
 });
-bot.command("start", async (ctx: MessageContext<Bot>) => {
+bot.command("start", async (ctx: MyMessageContext) => {
   await commandsHandler.handleStartCommand(ctx);
 });
-bot.command("help", async (ctx: MessageContext<Bot>) => {
+bot.command("help", async (ctx: MyMessageContext) => {
   await commandsHandler.handleHelpCommand(ctx);
 });
 // Handle Callback
-bot.callbackQuery<RegExp>(
-  /^.+$/,
-  async (ctx: CallbackQueryShorthandContext<Bot, RegExp>) => {
-    await commandsHandler.handleCallbackCommand(ctx);
-  }
-);
+bot.callbackQuery<RegExp>(/^.+$/, async (ctx: MyCallbackQueryContext) => {
+  await commandsHandler.handleCallbackCommand(ctx);
+});
 
 const main = async () => {
   try {

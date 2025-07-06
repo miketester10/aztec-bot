@@ -7,10 +7,12 @@ import {
   underline,
   format,
   link,
-  MessageContext,
   TelegramInlineKeyboardButton,
-  CallbackQueryShorthandContext,
 } from "gramio";
+import {
+  MyMessageContext,
+  MyCallbackQueryContext,
+} from "../interfaces/custom-context.interface";
 import { logger } from "../logger/logger";
 import { ValidatorHandler } from "./validator-handler";
 import { CallbackRouter } from "../interfaces/callback-router.interface";
@@ -56,7 +58,7 @@ export class CommandsHandler {
     }
   }
 
-  async handleValidatorCommand(ctx: MessageContext<Bot>): Promise<void> {
+  async handleValidatorCommand(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
     const address = ctx.update?.message?.text
       ?.split(" ")[1]
@@ -80,7 +82,7 @@ export class CommandsHandler {
   }
 
   async handleTop10Command(
-    ctx: MessageContext<Bot> | CallbackQueryShorthandContext<Bot, RegExp>
+    ctx: MyMessageContext | MyCallbackQueryContext
   ): Promise<void> {
     const isCallbackContext = this.isCallbackContext(ctx);
     if (!isCallbackContext) await ctx.sendChatAction("typing");
@@ -124,7 +126,7 @@ export class CommandsHandler {
     }
   }
 
-  async handleEpochCommand(ctx: MessageContext<Bot>): Promise<void> {
+  async handleEpochCommand(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
     try {
       const result = await this.validatorHandler.getCurrentEpochStats();
@@ -139,7 +141,7 @@ export class CommandsHandler {
     }
   }
 
-  async handleStartCommand(ctx: MessageContext<Bot>): Promise<void> {
+  async handleStartCommand(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
     const username = ctx.from?.firstName || ctx.from?.username || ctx.from?.id;
 
@@ -176,7 +178,7 @@ ${blockquote(`⚠️ For more information contact the developer:
     });
   }
 
-  async handleHelpCommand(ctx: MessageContext<Bot>): Promise<void> {
+  async handleHelpCommand(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
     const message = format`
   ${bold("📚 LIST OF COMMANDS 📚")}
@@ -193,9 +195,7 @@ ${blockquote(
     await ctx.reply(message);
   }
 
-  async handleCallbackCommand(
-    ctx: CallbackQueryShorthandContext<Bot, RegExp>
-  ): Promise<void> {
+  async handleCallbackCommand(ctx: MyCallbackQueryContext): Promise<void> {
     const data = ctx.update?.callback_query?.data;
     logger.info(`Callback received with data: ${data}`);
     const [action, payload] = data?.split(":") || [];
@@ -257,10 +257,10 @@ ${blockquote(
     return callbackRouter;
   }
 
-  // If this method returns true, then ctx is of type CallbackQueryShorthandContext<Bot, RegExp>.
+  // If this method returns true, then ctx is of type MyCallbackQueryContext.
   private isCallbackContext(
-    ctx: MessageContext<Bot> | CallbackQueryShorthandContext<Bot, RegExp>
-  ): ctx is CallbackQueryShorthandContext<Bot, RegExp> {
-    return !("reply" in ctx); // .reply() method is only available in MessageContext<Bot>
+    ctx: MyMessageContext | MyCallbackQueryContext
+  ): ctx is MyCallbackQueryContext {
+    return !("reply" in ctx); // .reply() method is only available in MyMessageContext
   }
 }

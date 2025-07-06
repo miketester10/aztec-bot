@@ -1,10 +1,10 @@
-import { Bot, CallbackQueryShorthandContext } from "gramio";
+import { MyCallbackQueryContext } from "./custom-context.interface";
 
 export interface CallbackRouter {
   [key: string]: CallbackHandler;
 }
 
 type CallbackHandler = (
-  ctx: CallbackQueryShorthandContext<Bot, RegExp>,
+  ctx: MyCallbackQueryContext,
   payload: string
 ) => Promise<void>;

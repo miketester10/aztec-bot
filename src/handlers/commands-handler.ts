@@ -3,6 +3,8 @@ import {
   Bot,
   code,
   bold,
+  italic,
+  underline,
   format,
   link,
   MessageContext,
@@ -77,20 +79,33 @@ export class CommandsHandler {
     }
   }
 
-  async handleTop10Command(ctx: MessageContext<Bot>): Promise<void> {
-    await ctx.sendChatAction("typing");
+  async handleTop10Command(
+    ctx: MessageContext<Bot> | CallbackQueryShorthandContext<Bot, RegExp>
+  ): Promise<void> {
+    const isCallbackContext = this.isCallbackContext(ctx);
+    if (!isCallbackContext) await ctx.sendChatAction("typing");
+    const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
+      [
+        {
+          text: "ℹ️ Criteria",
+          callback_data: "info:rank_score_criteria",
+        },
+      ],
+    ];
     try {
       const result = await this.validatorHandler.getTop10Validators();
       const message =
         this.validatorHandler.createFormattedMessageForTop10Validators(result);
-      const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
-        [
-          {
-            text: "Rank score calculation Criteria",
-            callback_data: "info:rank_score_criteria",
+
+      if (isCallbackContext) {
+        await ctx.editText(message, {
+          reply_markup: {
+            inline_keyboard: inlineKeyboard,
           },
-        ],
-      ];
+        });
+        return;
+      }
+
       await ctx.reply(message, {
         reply_markup: {
           inline_keyboard: inlineKeyboard,
@@ -100,6 +115,11 @@ export class CommandsHandler {
       const messageError = format`${code(
         this.validatorHandler.handleError(error)
       )}`;
+      if (isCallbackContext) {
+        await ctx.editText(messageError);
+        return;
+      }
+
       await ctx.reply(messageError);
     }
   }
@@ -196,18 +216,51 @@ ${blockquote(
         let message;
         switch (payload) {
           case callbackPayload.RANK_SCORE_CRITERIA:
-            message = `Rank are based on a score that considers the following metrics:
-   
-    - Attestation Success Rate (35%)
-    - Attestation Volume (25%) 
-    - Proposal Success Rate (20%)
-    - Proposal Volume (20%)`;
-            await ctx.answerCallbackQuery({ text: message, show_alert: true });
+            message = format`${blockquote(
+              format`ℹ️ ${bold("RANKING SCORE CALCULATION")} ℹ️
+
+              ${underline(
+                "Validators are ranked based on a weighted score (0-1) that considers the following metrics:"
+              )}
+
+              ${italic("- Attestation Success Rate (35%)")}
+              ${italic("- Attestation Volume (25%)")}
+              ${italic("- Proposal Success Rate (20%)")}
+              ${italic("- Proposal Volume (20%)")}`
+            )}`;
+            // await ctx.answerCallbackQuery({ text: message, show_alert: true });
+            const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
+              [
+                {
+                  text: "🔙 Back",
+                  callback_data: "back:top_10_validators",
+                },
+              ],
+            ];
+            await ctx.editText(message, {
+              reply_markup: {
+                inline_keyboard: inlineKeyboard,
+              },
+            });
+            break;
+        }
+      },
+      back: async (ctx, payload): Promise<void> => {
+        switch (payload) {
+          case callbackPayload.TOP_10_VALIDATORS:
+            await this.handleTop10Command(ctx);
             break;
         }
       },
     };
 
     return callbackRouter;
+  }
+
+  // If this method returns true, then ctx is of type CallbackQueryShorthandContext<Bot, RegExp>.
+  private isCallbackContext(
+    ctx: MessageContext<Bot> | CallbackQueryShorthandContext<Bot, RegExp>
+  ): ctx is CallbackQueryShorthandContext<Bot, RegExp> {
+    return !("reply" in ctx); // .reply() method is only available in MessageContext
   }
 }

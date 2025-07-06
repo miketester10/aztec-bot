@@ -1,4 +1,4 @@
-import { Bot, MessageContext } from "gramio";
+import { Bot, CallbackQueryShorthandContext, MessageContext } from "gramio";
 import { CommandsHandler } from "./handlers/commands-handler";
 import { ServerHandler } from "./handlers/server-handler";
 import { logger } from "./logger/logger";
@@ -36,9 +36,12 @@ bot.command("help", async (ctx: MessageContext<Bot>) => {
   await commandsHandler.handleHelpCommand(ctx);
 });
 // Handle Callback
-bot.callbackQuery<RegExp>(/^.+$/, async (ctx) => {
-  await commandsHandler.handleCallbackCommand(ctx);
-});
+bot.callbackQuery<RegExp>(
+  /^.+$/,
+  async (ctx: CallbackQueryShorthandContext<Bot, RegExp>) => {
+    await commandsHandler.handleCallbackCommand(ctx);
+  }
+);
 
 const main = async () => {
   try {

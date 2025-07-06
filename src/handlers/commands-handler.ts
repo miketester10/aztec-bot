@@ -261,6 +261,6 @@ ${blockquote(
   private isCallbackContext(
     ctx: MessageContext<Bot> | CallbackQueryShorthandContext<Bot, RegExp>
   ): ctx is CallbackQueryShorthandContext<Bot, RegExp> {
-    return !("reply" in ctx); // .reply() method is only available in MessageContext
+    return !("reply" in ctx); // .reply() method is only available in MessageContext<Bot>
   }
 }

@@ -197,7 +197,7 @@ ${blockquote(
 
   async handleCallbackCommand(ctx: MyCallbackQueryContext): Promise<void> {
     const data = ctx.update?.callback_query?.data;
-    logger.info(`Callback received with data: ${data}`);
+    logger.warn(`Callback received with data: ${data}`);
     const [action, payload] = data?.split(":") || [];
 
     const callbackRouter = this.callbackRouter();
@@ -205,6 +205,7 @@ ${blockquote(
 
     if (actionHandler) {
       await actionHandler(ctx, payload);
+      logger.debug(`Action [${action}] executed with payload: [${payload}]`);
       return;
     }
     logger.error(`No actionHandler found for: ${action}`);
@@ -237,6 +238,7 @@ ${blockquote(
                 },
               ],
             ];
+            logger.debug(`Editing the message...`);
             await ctx.editText(message, {
               reply_markup: {
                 inline_keyboard: inlineKeyboard,
@@ -248,6 +250,7 @@ ${blockquote(
       back: async (ctx, payload): Promise<void> => {
         switch (payload) {
           case callbackPayload.TOP_10_VALIDATORS:
+            logger.debug(`Editing the message...`);
             await this.handleTop10Command(ctx);
             break;
         }

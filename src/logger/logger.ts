@@ -8,7 +8,7 @@ const logger = pino({
       colorize: true,
     },
   },
-  level: "info",
+  level: "debug",
 });
 
 export { logger };

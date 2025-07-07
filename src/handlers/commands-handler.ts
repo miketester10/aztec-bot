@@ -14,14 +14,13 @@ import {
   MyCallbackQueryContext,
 } from "../interfaces/custom-context.interface";
 import { logger } from "../logger/logger";
-import { ValidatorHandler } from "./validator-handler";
+import { AztecHandler } from "./aztec-handler";
 import { CallbackRouter } from "../interfaces/callback-router.interface";
 import { callbackPayload } from "../consts/callback-payload";
 
 export class CommandsHandler {
   private static _instance: CommandsHandler;
-  private readonly validatorHandler: ValidatorHandler =
-    ValidatorHandler.getInstance();
+  private readonly aztecHandler: AztecHandler = AztecHandler.getInstance();
 
   private constructor() {}
 
@@ -36,6 +35,10 @@ export class CommandsHandler {
     try {
       const commands_set = await bot.api.setMyCommands({
         commands: [
+          {
+            command: "network_health",
+            description: "Network health info",
+          },
           {
             command: "validator",
             description: "<wallet_address> - Validator stats",
@@ -58,6 +61,21 @@ export class CommandsHandler {
     }
   }
 
+  async newtworkHealth(ctx: MyMessageContext) {
+    await ctx.sendChatAction("typing");
+    try {
+      const result = await this.aztecHandler.getNetworkHealth();
+      const message =
+        this.aztecHandler.createFormattedMessageForNetworkHealth(result);
+      await ctx.reply(message);
+    } catch (error) {
+      const messageError = format`${code(
+        this.aztecHandler.handleError(error)
+      )}`;
+      await ctx.reply(messageError);
+    }
+  }
+
   async handleValidatorCommand(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
     const address = ctx.update?.message?.text
@@ -69,13 +87,13 @@ export class CommandsHandler {
       return;
     }
     try {
-      const result = await this.validatorHandler.getValidatorStats(address);
+      const result = await this.aztecHandler.getValidatorStats(address);
       const message =
-        this.validatorHandler.createFormattedMessageForValidatorStats(result);
+        this.aztecHandler.createFormattedMessageForValidatorStats(result);
       await ctx.reply(message);
     } catch (error) {
       const messageError = format`${code(
-        this.validatorHandler.handleError(error)
+        this.aztecHandler.handleError(error)
       )}`;
       await ctx.reply(messageError);
     }
@@ -95,9 +113,9 @@ export class CommandsHandler {
       ],
     ];
     try {
-      const result = await this.validatorHandler.getTop10Validators();
+      const result = await this.aztecHandler.getTop10Validators();
       const message =
-        this.validatorHandler.createFormattedMessageForTop10Validators(result);
+        this.aztecHandler.createFormattedMessageForTop10Validators(result);
 
       if (isCallbackContext) {
         await ctx.editText(message, {
@@ -115,7 +133,7 @@ export class CommandsHandler {
       });
     } catch (error) {
       const messageError = format`${code(
-        this.validatorHandler.handleError(error)
+        this.aztecHandler.handleError(error)
       )}`;
       if (isCallbackContext) {
         await ctx.editText(messageError);
@@ -129,13 +147,13 @@ export class CommandsHandler {
   async handleEpochCommand(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
     try {
-      const result = await this.validatorHandler.getCurrentEpochStats();
+      const result = await this.aztecHandler.getCurrentEpochStats();
       const message =
-        this.validatorHandler.createFormattedMessageForEpochStats(result);
+        this.aztecHandler.createFormattedMessageForEpochStats(result);
       await ctx.reply(message);
     } catch (error) {
       const messageError = format`${code(
-        this.validatorHandler.handleError(error)
+        this.aztecHandler.handleError(error)
       )}`;
       await ctx.reply(messageError);
     }
@@ -184,7 +202,8 @@ ${blockquote(`⚠️ For more information contact the developer:
   ${bold("📚 LIST OF COMMANDS 📚")}
 
 ${blockquote(
-  format`🔹${code("/validator <wallet_address>")} - to receive validator stats
+  format`🔹${code("/network_healt")} - to receive network healt info
+🔹${code("/validator <wallet_address>")} - to receive validator stats
 🔹${code("/top10")} - to receive top 10 validators all time
 🔹${code("/epoch")} - to receive current epoch stats
 🔹${code("/start")} - to start the bot

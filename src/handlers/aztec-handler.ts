@@ -13,17 +13,32 @@ import {
   validatorStatus,
   validatorStatusMessage,
 } from "../consts/validator-status";
+import { NetworkHealthResponse } from "../interfaces/network-health-response.interface";
 
-export class ValidatorHandler {
-  private static _instance: ValidatorHandler;
+export class AztecHandler {
+  private static _instance: AztecHandler;
 
   private constructor() {}
 
-  static getInstance(): ValidatorHandler {
-    if (!ValidatorHandler._instance) {
-      ValidatorHandler._instance = new ValidatorHandler();
+  static getInstance(): AztecHandler {
+    if (!AztecHandler._instance) {
+      AztecHandler._instance = new AztecHandler();
     }
-    return ValidatorHandler._instance;
+    return AztecHandler._instance;
+  }
+
+  async getNetworkHealth(): Promise<NetworkHealthResponse> {
+    try {
+      const result = await axios.get<NetworkHealthResponse>(API.NETWORK_HEALTH);
+
+      logger.info(
+        `Pending Block: ${result.data[5].height}, Proven Block: ${result.data[1].height}, Current Slot: ${result.data[5].header.globalVariables.slotNumber}`
+      );
+
+      return result.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getValidatorStats(
@@ -57,7 +72,7 @@ export class ValidatorHandler {
       const currentEpoch = (await this.getCurrentEpochStats())
         .currentEpochMetrics.epochNumber;
       const result = await axios.get<TopValidatorsResponse>(
-        `${API.TOP_VALIDATORS_API}?startEpoch=1&endEpoch=${currentEpoch}`
+        `${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=${currentEpoch}`
       );
       return result.data;
     } catch (error) {
@@ -81,6 +96,25 @@ export class ValidatorHandler {
     }
   }
 
+  createFormattedMessageForNetworkHealth(
+    rawData: NetworkHealthResponse
+  ): FormattableString {
+    const message = format`${blockquote(
+      format`🔷 ${bold("NETWORK HEALTH")} 🔷
+
+      🏗️ ${bold("Pending Block:")} ${code(rawData[4].height)} 
+      🧱 ${bold("Proven Block:")} ${code(rawData[1].height)} 
+      🎰 ${bold("Current Slot:")} ${code(
+        rawData[4].header.globalVariables.slotNumber
+      )}
+      
+      
+      `
+    )}`;
+
+    return message;
+  }
+
   createFormattedMessageForValidatorStats(
     rawData: ValidatorStatsResponse
   ): FormattableString {
@@ -93,6 +127,8 @@ export class ValidatorHandler {
         status = validatorStatusMessage.EXITED;
         break;
     }
+
+    const balance = (Number(rawData.balance) / 1e18).toFixed(2);
 
     const totalActiveValidators =
       rawData.currentEpochStats?.totalActiveValidators;
@@ -128,7 +164,7 @@ export class ValidatorHandler {
 
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
-      💰 ${bold("Staked Amount:")} ${code(rawData.balance)}
+      💰 ${bold("Staked Amount:")} ${code(`${balance} STK`)}
       👤 ${bold("Proposer Address:")} ${code(rawData.proposerAddress)}
       💼 ${bold("Withdrawer Address:")} ${code(rawData.withdrawalCredentials)}
 

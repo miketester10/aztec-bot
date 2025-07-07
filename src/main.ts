@@ -24,6 +24,9 @@ const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
   logger.info("✅ Bot Started");
 });
 // Handle Commands
+bot.command("network_health", async (ctx: MyMessageContext) => {
+  await commandsHandler.newtworkHealth(ctx);
+});
 bot.command("validator", async (ctx: MyMessageContext) => {
   await commandsHandler.handleValidatorCommand(ctx);
 });

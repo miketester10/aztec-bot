@@ -30,9 +30,9 @@ export class AztecHandler {
   async getNetworkHealth(): Promise<NetworkHealthResponse> {
     try {
       const result = await axios.get<NetworkHealthResponse>(API.NETWORK_HEALTH);
-
+      
       logger.info(
-        `Pending Block: ${result.data[5].height}, Proven Block: ${result.data[1].height}, Current Slot: ${result.data[5].header.globalVariables.slotNumber}`
+        `Pending Block: ${result.data[4].height}, Proven Block: ${result.data[1].height}, Current Slot: ${result.data[4].header.globalVariables.slotNumber}`
       );
 
       return result.data;

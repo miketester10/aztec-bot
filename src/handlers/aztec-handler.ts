@@ -128,8 +128,6 @@ export class AztecHandler {
         break;
     }
 
-    const balance = (Number(rawData.balance) / 1e18).toFixed(2);
-
     const totalActiveValidators =
       rawData.currentEpochStats?.totalActiveValidators;
     const totalInactiveValidators =
@@ -164,7 +162,7 @@ export class AztecHandler {
 
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
-      💰 ${bold("Staked Amount:")} ${code(`${balance} STK`)}
+      💰 ${bold("Staked Amount:")} ${code("100.00 STK")}
       👤 ${bold("Proposer Address:")} ${code(rawData.proposerAddress)}
       💼 ${bold("Withdrawer Address:")} ${code(rawData.withdrawalCredentials)}
 

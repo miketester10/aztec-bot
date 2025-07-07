@@ -25,10 +25,10 @@ export class ServerHandler {
   async startServer(bot: Bot): Promise<Server> {
     // Setup Middleware
     this.app.use(express.json());
-    this.app.use((req: Request, res: Response, next: NextFunction) => {
-      logger.info(`${req.method} ${req.url}`);
-      next();
-    });
+    // this.app.use((req: Request, res: Response, next: NextFunction) => {
+    //   logger.info(`${req.method} ${req.url}`);
+    //   next();
+    // });
 
     // Setup Health route
     this.app.get("/health", (req: Request, res: Response) => {

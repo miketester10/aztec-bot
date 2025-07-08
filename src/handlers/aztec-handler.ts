@@ -180,9 +180,9 @@ export class AztecHandler {
     const top10Countries: Country[] = countriesWithPercentage.slice(0, 10);
 
     const message = format`${blockquote(
-      format`🔷 ${bold("ACTIVE NODES")} 🔷
+      format`🔷 ${bold("ACTIVE NODES INFO")} 🔷
 
-      ${bold("Total:")} ${code(`${totalActiveNodes}`)} 🟢 
+   ℹ️ ${bold("Total:")} ${code(`${totalActiveNodes}`)} 
 
    🌍 ${bold("TOP 10 COUNTRIES")} 🌍
     ${top10Countries.map((c: Country, _index: number) => {
@@ -244,7 +244,7 @@ export class AztecHandler {
       "VALIDATOR DETAILS"
     )} 🔷
 
-      ${bold("Status:")} ${status} 
+      ℹ️ ${bold("Status:")} ${status} 
 
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
@@ -332,7 +332,7 @@ ${code(
     const message = format`${blockquote(
       format`🔷 ${bold("EPOCH DETAILS")} 🔷
 
-      ${bold("Current Epoch:")} ${code(rawData.currentEpochMetrics.epochNumber)}
+      ℹ️ ${bold("Current Epoch:")} ${code(rawData.currentEpochMetrics.epochNumber)}
 
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(

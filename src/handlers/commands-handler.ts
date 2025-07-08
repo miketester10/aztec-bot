@@ -111,7 +111,7 @@ export class CommandsHandler {
       const result = await this.aztecHandler.getNodeInfo(peerId);
       // const message =
       //   this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
-      await ctx.reply("OK");
+      await ctx.reply("To Be Implemented In a Few Hours");
     } catch (error) {
       const messageError = format`${code(
         this.aztecHandler.handleError(error)

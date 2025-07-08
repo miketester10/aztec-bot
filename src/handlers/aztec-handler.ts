@@ -26,9 +26,11 @@ import {
   Country,
 } from "../interfaces/active-nodes-by-country-response.interface";
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
+import { SocksProxyAgent } from "socks-proxy-agent";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
+  private readonly proxyAgent = new SocksProxyAgent(API.PROXY_AGENT);
 
   private constructor() {}
 
@@ -92,7 +94,10 @@ export class AztecHandler {
   ): Promise<ValidatorStatsResponse> {
     try {
       const result = await axios.get<ValidatorStatsResponse>(
-        `${API.VALIDATOR_STATS}/${validatorAddress}`
+        `${API.VALIDATOR_STATS}/${validatorAddress}`,
+        {
+          httpsAgent: this.proxyAgent,
+        }
       );
 
       try {
@@ -118,8 +123,12 @@ export class AztecHandler {
       const currentEpoch = (await this.getCurrentEpochStats())
         .currentEpochMetrics.epochNumber;
       const result = await axios.get<TopValidatorsResponse>(
-        `${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=${currentEpoch}`
+        `${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=${currentEpoch}`,
+        {
+          httpsAgent: this.proxyAgent,
+        }
       );
+
       return result.data;
     } catch (error) {
       throw error;
@@ -128,10 +137,22 @@ export class AztecHandler {
 
   async getCurrentEpochStats(): Promise<CurrentEpochStatsResponse> {
     try {
-      throw new Error("API TEMPORARY NOT AVAILABLE.");
+      // throw new Error("API TEMPORARY NOT AVAILABLE.");
       const result = await axios.get<CurrentEpochStatsResponse>(
-        API.CURRENT_EPOCH_STATS
+        API.CURRENT_EPOCH_STATS,
+        {
+          httpsAgent: this.proxyAgent,
+        }
       );
+
+      try {
+        const ip = await axios.get("https://api.ipify.org", {
+          httpsAgent: this.proxyAgent,
+        });
+        logger.debug(`Request made with IP: ${ip.data}`);
+      } catch (error) {
+        logger.error(`Error whit "api.ipify.org": ${(error as Error).message}`);
+      }
 
       logger.info(
         `Current epoch: ${result.data.currentEpochMetrics.epochNumber}`
@@ -333,7 +354,9 @@ ${code(
     const message = format`${blockquote(
       format`🔷 ${bold("EPOCH DETAILS")} 🔷
 
-      ℹ️ ${bold("Current Epoch:")} ${code(rawData.currentEpochMetrics.epochNumber)}
+      ℹ️ ${bold("Current Epoch:")} ${code(
+        rawData.currentEpochMetrics.epochNumber
+      )}
 
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(

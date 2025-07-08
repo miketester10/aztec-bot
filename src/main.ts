@@ -30,6 +30,9 @@ bot.command("network_health", async (ctx: MyMessageContext) => {
 bot.command("active_nodes", async (ctx: MyMessageContext) => {
   await commandsHandler.activeNodesByCountry(ctx);
 });
+bot.command("node", async (ctx: MyMessageContext) => {
+  await commandsHandler.handleNodeCommand(ctx);
+})
 bot.command("validator", async (ctx: MyMessageContext) => {
   await commandsHandler.handleValidatorCommand(ctx);
 });

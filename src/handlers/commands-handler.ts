@@ -44,6 +44,10 @@ export class CommandsHandler {
             description: "Active nodes info",
           },
           {
+            command: "node",
+            description: "<peer_id> - Node info",
+          },
+          {
             command: "validator",
             description: "<wallet_address> - Validator stats",
           },
@@ -65,7 +69,7 @@ export class CommandsHandler {
     }
   }
 
-  async newtworkHealth(ctx: MyMessageContext) {
+  async newtworkHealth(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
     try {
       const result = await this.aztecHandler.getNetworkHealth();
@@ -87,6 +91,27 @@ export class CommandsHandler {
       const message =
         this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
       await ctx.reply(message);
+    } catch (error) {
+      const messageError = format`${code(
+        this.aztecHandler.handleError(error)
+      )}`;
+      await ctx.reply(messageError);
+    }
+  }
+
+  async handleNodeCommand(ctx: MyMessageContext): Promise<void> {
+    await ctx.sendChatAction("typing");
+    const peerId = ctx.update?.message?.text?.split(" ")[1];
+    if (!peerId) {
+      const message = format`${code("Please enter a valid Peer ID.")}`;
+      await ctx.reply(message);
+      return;
+    }
+    try {
+      const result = await this.aztecHandler.getNodeInfo(peerId);
+      // const message =
+      //   this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
+      await ctx.reply("OK");
     } catch (error) {
       const messageError = format`${code(
         this.aztecHandler.handleError(error)
@@ -223,6 +248,7 @@ ${blockquote(`⚠️ For more information contact the developer:
 ${blockquote(
   format`🔹${code("/network_healt")} - to receive network healt info
 🔹${code("/active_nodes")} - to receive active nodes info
+🔹${code("/node <peer_id>")} - to receive node info
 🔹${code("/validator <wallet_address>")} - to receive validator stats
 🔹${code("/top10")} - to receive top 10 validators all time
 🔹${code("/epoch")} - to receive current epoch stats

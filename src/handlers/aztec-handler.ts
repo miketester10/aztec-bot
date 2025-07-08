@@ -25,6 +25,7 @@ import {
   ActiveNodesByCountryResponse,
   Country,
 } from "../interfaces/active-nodes-by-country-response.interface";
+import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
@@ -63,6 +64,22 @@ export class AztecHandler {
         0
       );
       logger.info(`Active nodes: ${activeNodes}`);
+
+      return result.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getNodeInfo(peerId: string): Promise<NodeInfoResponse> {
+    try {
+      const result = await axios.get<NodeInfoResponse>(
+        `${API.NODE_INFO}?id=${peerId}`
+      );
+      if (!result.data.peers) {
+        throw new Error("Peer ID not found.");
+      }
+      logger.info(`Peer ID: ${result.data.peers[0].id}`);
 
       return result.data;
     } catch (error) {
@@ -365,6 +382,9 @@ ${code(
     }
     const unknownErrorMessage = (error as Error).message;
     logger.error(`Unknown Error: ${unknownErrorMessage}`);
+
+    if (unknownErrorMessage.includes("Peer ID not found."))
+      return unknownErrorMessage;
 
     return defaultErrorMessage;
   }

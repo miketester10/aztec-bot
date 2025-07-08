@@ -128,6 +128,7 @@ export class AztecHandler {
 
   async getCurrentEpochStats(): Promise<CurrentEpochStatsResponse> {
     try {
+      throw new Error("API TEMPORARY NOT AVAILABLE.");
       const result = await axios.get<CurrentEpochStatsResponse>(
         API.CURRENT_EPOCH_STATS
       );

@@ -40,6 +40,10 @@ export class CommandsHandler {
             description: "Network health info",
           },
           {
+            command: "active_nodes",
+            description: "Active nodes info",
+          },
+          {
             command: "validator",
             description: "<wallet_address> - Validator stats",
           },
@@ -67,6 +71,21 @@ export class CommandsHandler {
       const result = await this.aztecHandler.getNetworkHealth();
       const message =
         this.aztecHandler.createFormattedMessageForNetworkHealth(result);
+      await ctx.reply(message);
+    } catch (error) {
+      const messageError = format`${code(
+        this.aztecHandler.handleError(error)
+      )}`;
+      await ctx.reply(messageError);
+    }
+  }
+
+  async activeNodesByCountry(ctx: MyMessageContext): Promise<void> {
+    await ctx.sendChatAction("typing");
+    try {
+      const result = await this.aztecHandler.getActiveNodesByCountry();
+      const message =
+        this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
       await ctx.reply(message);
     } catch (error) {
       const messageError = format`${code(
@@ -203,6 +222,7 @@ ${blockquote(`⚠️ For more information contact the developer:
 
 ${blockquote(
   format`🔹${code("/network_healt")} - to receive network healt info
+🔹${code("/active_nodes")} - to receive active nodes info
 🔹${code("/validator <wallet_address>")} - to receive validator stats
 🔹${code("/top10")} - to receive top 10 validators all time
 🔹${code("/epoch")} - to receive current epoch stats

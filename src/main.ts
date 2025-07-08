@@ -27,6 +27,9 @@ const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
 bot.command("network_health", async (ctx: MyMessageContext) => {
   await commandsHandler.newtworkHealth(ctx);
 });
+bot.command("active_nodes", async (ctx: MyMessageContext) => {
+  await commandsHandler.activeNodesByCountry(ctx);
+});
 bot.command("validator", async (ctx: MyMessageContext) => {
   await commandsHandler.handleValidatorCommand(ctx);
 });

@@ -8,12 +8,23 @@ import { CurrentEpochStatsResponse } from "../interfaces/current-epoch-stats-res
 import { ErrorResponse } from "../interfaces/error-response.interface";
 import { API } from "../consts/api";
 import { logger } from "../logger/logger";
-import { blockquote, bold, code, format, FormattableString } from "gramio";
+import {
+  blockquote,
+  bold,
+  code,
+  format,
+  FormattableString,
+  italic,
+} from "gramio";
 import {
   validatorStatus,
   validatorStatusMessage,
 } from "../consts/validator-status";
 import { NetworkHealthResponse } from "../interfaces/network-health-response.interface";
+import {
+  ActiveNodesByCountryResponse,
+  Country,
+} from "../interfaces/active-nodes-by-country-response.interface";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
@@ -30,10 +41,28 @@ export class AztecHandler {
   async getNetworkHealth(): Promise<NetworkHealthResponse> {
     try {
       const result = await axios.get<NetworkHealthResponse>(API.NETWORK_HEALTH);
-      
+
       logger.info(
         `Pending Block: ${result.data[4].height}, Proven Block: ${result.data[1].height}, Current Slot: ${result.data[4].header.globalVariables.slotNumber}`
       );
+
+      return result.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getActiveNodesByCountry(): Promise<ActiveNodesByCountryResponse> {
+    try {
+      const result = await axios.get<ActiveNodesByCountryResponse>(
+        API.ACTIVE_NODES_BY_COUNTRY
+      );
+
+      const activeNodes = result.data.countries.reduce(
+        (acc: number, country: Country) => acc + country.count,
+        0
+      );
+      logger.info(`Active nodes: ${activeNodes}`);
 
       return result.data;
     } catch (error) {
@@ -110,6 +139,46 @@ export class AztecHandler {
       
       
       `
+    )}`;
+
+    return message;
+  }
+
+  createFormattedMessageForActiveNodesByCountry(
+    rawData: ActiveNodesByCountryResponse
+  ): FormattableString {
+    const totalActiveNodes = rawData.countries.reduce(
+      (acc: number, country: Country) => acc + country.count,
+      0
+    );
+    const countriesWithPercentage: Country[] = rawData.countries.map(
+      (c: Country) => ({
+        country_name: c.country_name,
+        country_code: c.country_code,
+        count: c.count,
+        percentage: ((c.count / totalActiveNodes) * 100).toFixed(2),
+      })
+    );
+
+    const top10Countries: Country[] = countriesWithPercentage.slice(0, 10);
+
+    const message = format`${blockquote(
+      format`🔷 ${bold("ACTIVE NODES")} 🔷
+
+      ${bold("Total:")} ${code(`${totalActiveNodes}`)} 🟢 
+
+   🌍 ${bold("TOP 10 COUNTRIES")} 🌍
+    ${top10Countries.map((c: Country, _index: number) => {
+      let medal = "";
+      if (_index === 0) medal = "🥇";
+      else if (_index === 1) medal = "🥈";
+      else if (_index === 2) medal = "🥉";
+      else medal = "🔹";
+
+      return format`${bold(`${medal} ${c.country_name}:`)} ${code(
+        `${c.count}`
+      )} ${italic(`(${c.percentage}%)`)}\n`;
+    })}`
     )}`;
 
     return message;
@@ -204,10 +273,13 @@ export class AztecHandler {
 ${code(
   rawData.validators
     .map((validator: TopValidator, _index: number) => {
-      if (_index === 0) return `🥇${validator.address}`;
-      if (_index === 1) return `🥈${validator.address}`;
-      if (_index === 2) return `🥉${validator.address}`;
-      return `🔹${validator.address}`;
+      let medal = "";
+      if (_index === 0) medal = "🥇";
+      else if (_index === 1) medal = "🥈";
+      else if (_index === 2) medal = "🥉";
+      else medal = "🔹";
+
+      return `${medal}${validator.address}`;
     })
     .join("\n")
 )}

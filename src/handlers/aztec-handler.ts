@@ -197,13 +197,15 @@ export class AztecHandler {
       (acc: number, country: Country) => acc + country.count,
       0
     );
+
     const countriesWithPercentage: Country[] = rawData.countries.map(
-      (c: Country) => ({
-        country_name: c.country_name,
-        country_code: c.country_code,
-        count: c.count,
-        percentage: ((c.count / totalActiveNodes) * 100).toFixed(2),
-      })
+      (c: Country) => {
+        const percentage = ((c.count / totalActiveNodes) * 100).toFixed(2);
+        return {
+          ...c,
+          percentage,
+        };
+      }
     );
 
     const top10Countries: Country[] = countriesWithPercentage.slice(0, 10);

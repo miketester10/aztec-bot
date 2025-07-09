@@ -482,10 +482,10 @@ ${code(
 
   private async checkWichIPmadeRequest(): Promise<void> {
     try {
-      const ip = await axios.get("https://api.ipify.org", {
+      const result = await axios.get("https://ifconfig.me", {
         httpsAgent: this.proxyAgent,
       });
-      logger.debug(`Request made with IP: ${ip.data}`);
+      logger.debug(`Request made with IP: ${result.data}`);
     } catch (error) {
       logger.error(`Error while getting IP: ${(error as Error).message}`);
     }

@@ -237,7 +237,7 @@ ${blockquote(`⚠️ For more information contact the developer:
   ${bold("📚 LIST OF COMMANDS 📚")}
 
 ${blockquote(
-  format`🔹${code("/network_healt")} - to receive network healt info
+  format`🔹${code("/network_health")} - to receive network health info
 🔹${code("/active_nodes")} - to receive active nodes info
 🔹${code("/node <peer_id>")} - to receive node info
 🔹${code("/validator <wallet_address>")} - to receive validator stats

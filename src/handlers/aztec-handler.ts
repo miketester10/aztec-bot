@@ -26,13 +26,14 @@ import {
   Country,
 } from "../interfaces/active-nodes-by-country-response.interface";
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
-import { SocksProxyAgent } from "socks-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import UserAgent from "user-agents";
 import { format as formatDate, parseISO } from "date-fns";
+import { ProxyHandler } from "./proxy-handler";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
-  private readonly proxyAgent = new SocksProxyAgent(API.PROXY_AGENT);
+  private readonly proxyHandler: ProxyHandler = ProxyHandler.getInstance();
 
   private constructor() {}
 
@@ -59,16 +60,17 @@ export class AztecHandler {
 
   async getActiveNodesByCountry(): Promise<ActiveNodesByCountryResponse> {
     try {
+      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
       const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<ActiveNodesByCountryResponse>(
         API.ACTIVE_NODES_BY_COUNTRY,
         {
-          httpsAgent: this.proxyAgent,
+          httpsAgent: proxyAgent,
           headers: browserHeaders,
         }
       );
 
-      await this.checkWichIPmadeRequest();
+      await this.checkWichIPmadeRequest(proxyAgent);
 
       const activeNodes = result.data.countries.reduce(
         (acc: number, country: Country) => acc + country.count,
@@ -84,16 +86,17 @@ export class AztecHandler {
 
   async getNodeInfo(peerId: string): Promise<NodeInfoResponse> {
     try {
+      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
       const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<NodeInfoResponse>(
         `${API.NODE_INFO}?id=${peerId}`,
         {
-          httpsAgent: this.proxyAgent,
+          httpsAgent: proxyAgent,
           headers: browserHeaders,
         }
       );
 
-      await this.checkWichIPmadeRequest();
+      await this.checkWichIPmadeRequest(proxyAgent);
 
       if (!result.data.peers) {
         throw new Error("Peer ID not found.");
@@ -110,11 +113,12 @@ export class AztecHandler {
     validatorAddress: string
   ): Promise<ValidatorStatsResponse> {
     try {
+      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
       const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<ValidatorStatsResponse>(
         `${API.VALIDATOR_STATS}/${validatorAddress}`,
         {
-          httpsAgent: this.proxyAgent,
+          httpsAgent: proxyAgent,
           headers: browserHeaders,
         }
       );
@@ -139,16 +143,19 @@ export class AztecHandler {
 
   async getTop10Validators(): Promise<TopValidatorsResponse> {
     try {
+      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
       const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
-      const currentEpoch = (await this.getCurrentEpochStats())
-        .currentEpochMetrics.epochNumber;
+      // const currentEpoch = (await this.getCurrentEpochStats())
+      //   .currentEpochMetrics.epochNumber;
       const result = await axios.get<TopValidatorsResponse>(
-        `${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=${currentEpoch}`,
+        `${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=99999`,
         {
-          httpsAgent: this.proxyAgent,
+          httpsAgent: proxyAgent,
           headers: browserHeaders,
         }
       );
+
+      await this.checkWichIPmadeRequest(proxyAgent);
 
       return result.data;
     } catch (error) {
@@ -159,17 +166,24 @@ export class AztecHandler {
   async getCurrentEpochStats(): Promise<CurrentEpochStatsResponse> {
     try {
       // throw new Error("API TEMPORARY NOT AVAILABLE.");
+      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
       const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<CurrentEpochStatsResponse>(
         API.CURRENT_EPOCH_STATS,
         {
-          httpsAgent: this.proxyAgent,
+          httpsAgent: proxyAgent,
           headers: browserHeaders,
         }
       );
 
-      await this.checkWichIPmadeRequest();
+      await this.checkWichIPmadeRequest(proxyAgent);
 
+      if (
+        result.data.totalActiveValidators.toString().includes("Stolen Data") ||
+        result.data.currentEpochMetrics.epochNumber === 9999
+      ) {
+        throw new Error("IP banned by DASHTEC API");
+      }
       logger.info(
         `Current epoch: ${result.data.currentEpochMetrics.epochNumber}`
       );
@@ -480,10 +494,12 @@ ${code(
     return headers;
   }
 
-  private async checkWichIPmadeRequest(): Promise<void> {
+  private async checkWichIPmadeRequest(
+    proxyAgent: HttpsProxyAgent<string>
+  ): Promise<void> {
     try {
       const result = await axios.get("https://ifconfig.me", {
-        httpsAgent: this.proxyAgent,
+        httpsAgent: proxyAgent,
       });
       logger.debug(`Request made with IP: ${result.data}`);
     } catch (error) {

@@ -28,6 +28,7 @@ import {
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
 import { SocksProxyAgent } from "socks-proxy-agent";
 import UserAgent from "user-agents";
+import { format as formatDate, parseISO } from "date-fns";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
@@ -227,6 +228,39 @@ export class AztecHandler {
         `${c.count}`
       )} ${italic(`(${c.percentage}%)`)}\n`;
     })}`
+    )}`;
+
+    return message;
+  }
+
+  createFormattedMessageForNodeInfo(
+    rawData: NodeInfoResponse
+  ): FormattableString {
+    const version = rawData.peers![0].client;
+    const country =
+      rawData.peers![0].multi_addresses[0].ip_info[0].country_name;
+    const city = rawData.peers![0].multi_addresses[0].ip_info[0].city_name;
+    const location = `${city ? `${country}, ${city}` : country}`;
+    const coordinate = `Lat. ${
+      rawData.peers![0].multi_addresses[0].ip_info[0].latitude
+    } - Long. ${rawData.peers![0].multi_addresses[0].ip_info[0].longitude}`;
+
+    const firstSeen = parseISO(rawData.peers![0].created_at);
+    const lastSeen = parseISO(rawData.peers![0].last_seen);
+
+    const formattedFirstSeen = formatDate(firstSeen, "dd/MM/yyyy, HH:mm:ss");
+    const formattedLastSeen = formatDate(lastSeen, "dd/MM/yyyy, HH:mm:ss");
+
+    const message = format`${blockquote(
+      format`🔷 ${bold("NODE INFO")} 🔷
+
+   ℹ️ ${bold("Version:")} ${code(`${version}`)} 
+   🌍 ${bold("Location:")} ${code(`${location}`)}
+   🎯 ${bold("Coordinates:")} ${code(`${coordinate}`)}
+   🌱 ${bold("First seen:")} ${code(`${formattedFirstSeen}`)}
+   👀 ${bold("Last seen:")} ${code(`${formattedLastSeen}`)}
+   
+   `
     )}`;
 
     return message;

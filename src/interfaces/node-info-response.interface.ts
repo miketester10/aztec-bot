@@ -26,7 +26,7 @@ export interface IpInfo {
   port: number;
   as_name: string;
   as_number: number;
-  city_name: string;
+  city_name: string | undefined;
   country_name: string;
   country_iso: string;
   continent_name: string;

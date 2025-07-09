@@ -109,9 +109,9 @@ export class CommandsHandler {
     }
     try {
       const result = await this.aztecHandler.getNodeInfo(peerId);
-      // const message =
-      //   this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
-      await ctx.reply("To Be Implemented In a Few Hours");
+      const message =
+        this.aztecHandler.createFormattedMessageForNodeInfo(result);
+      await ctx.reply(message);
     } catch (error) {
       const messageError = format`${code(
         this.aztecHandler.handleError(error)

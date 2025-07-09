@@ -59,9 +59,16 @@ export class AztecHandler {
 
   async getActiveNodesByCountry(): Promise<ActiveNodesByCountryResponse> {
     try {
+      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<ActiveNodesByCountryResponse>(
-        API.ACTIVE_NODES_BY_COUNTRY
+        API.ACTIVE_NODES_BY_COUNTRY,
+        {
+          httpsAgent: this.proxyAgent,
+          headers: browserHeaders,
+        }
       );
+
+      await this.checkWichIPmadeRequest();
 
       const activeNodes = result.data.countries.reduce(
         (acc: number, country: Country) => acc + country.count,
@@ -77,9 +84,17 @@ export class AztecHandler {
 
   async getNodeInfo(peerId: string): Promise<NodeInfoResponse> {
     try {
+      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<NodeInfoResponse>(
-        `${API.NODE_INFO}?id=${peerId}`
+        `${API.NODE_INFO}?id=${peerId}`,
+        {
+          httpsAgent: this.proxyAgent,
+          headers: browserHeaders,
+        }
       );
+
+      await this.checkWichIPmadeRequest();
+
       if (!result.data.peers) {
         throw new Error("Peer ID not found.");
       }
@@ -153,14 +168,7 @@ export class AztecHandler {
         }
       );
 
-      try {
-        const ip = await axios.get("https://api.ipify.org", {
-          httpsAgent: this.proxyAgent,
-        });
-        logger.debug(`Request made with IP: ${ip.data}`);
-      } catch (error) {
-        logger.error(`Error whit "api.ipify.org": ${(error as Error).message}`);
-      }
+      await this.checkWichIPmadeRequest();
 
       logger.info(
         `Current epoch: ${result.data.currentEpochMetrics.epochNumber}`
@@ -470,5 +478,16 @@ ${code(
       "User-Agent": userAgent,
     };
     return headers;
+  }
+
+  private async checkWichIPmadeRequest(): Promise<void> {
+    try {
+      const ip = await axios.get("https://api.ipify.org", {
+        httpsAgent: this.proxyAgent,
+      });
+      logger.debug(`Request made with IP: ${ip.data}`);
+    } catch (error) {
+      logger.error(`Error while getting IP: ${(error as Error).message}`);
+    }
   }
 }

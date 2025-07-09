@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, RawAxiosRequestHeaders } from "axios";
 import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
 import {
   TopValidatorsResponse,
@@ -26,9 +26,12 @@ import {
   Country,
 } from "../interfaces/active-nodes-by-country-response.interface";
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
+import { SocksProxyAgent } from "socks-proxy-agent";
+import UserAgent from "user-agents";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
+  private readonly proxyAgent = new SocksProxyAgent(API.PROXY_AGENT);
 
   private constructor() {}
 
@@ -91,8 +94,13 @@ export class AztecHandler {
     validatorAddress: string
   ): Promise<ValidatorStatsResponse> {
     try {
+      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<ValidatorStatsResponse>(
-        `${API.VALIDATOR_STATS}/${validatorAddress}`
+        `${API.VALIDATOR_STATS}/${validatorAddress}`,
+        {
+          httpsAgent: this.proxyAgent,
+          headers: browserHeaders,
+        }
       );
 
       try {
@@ -115,11 +123,17 @@ export class AztecHandler {
 
   async getTop10Validators(): Promise<TopValidatorsResponse> {
     try {
+      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const currentEpoch = (await this.getCurrentEpochStats())
         .currentEpochMetrics.epochNumber;
       const result = await axios.get<TopValidatorsResponse>(
-        `${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=${currentEpoch}`
+        `${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=${currentEpoch}`,
+        {
+          httpsAgent: this.proxyAgent,
+          headers: browserHeaders,
+        }
       );
+
       return result.data;
     } catch (error) {
       throw error;
@@ -128,10 +142,24 @@ export class AztecHandler {
 
   async getCurrentEpochStats(): Promise<CurrentEpochStatsResponse> {
     try {
-      throw new Error("API TEMPORARY NOT AVAILABLE.");
+      // throw new Error("API TEMPORARY NOT AVAILABLE.");
+      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<CurrentEpochStatsResponse>(
-        API.CURRENT_EPOCH_STATS
+        API.CURRENT_EPOCH_STATS,
+        {
+          httpsAgent: this.proxyAgent,
+          headers: browserHeaders,
+        }
       );
+
+      try {
+        const ip = await axios.get("https://api.ipify.org", {
+          httpsAgent: this.proxyAgent,
+        });
+        logger.debug(`Request made with IP: ${ip.data}`);
+      } catch (error) {
+        logger.error(`Error whit "api.ipify.org": ${(error as Error).message}`);
+      }
 
       logger.info(
         `Current epoch: ${result.data.currentEpochMetrics.epochNumber}`
@@ -333,7 +361,9 @@ ${code(
     const message = format`${blockquote(
       format`🔷 ${bold("EPOCH DETAILS")} 🔷
 
-      ℹ️ ${bold("Current Epoch:")} ${code(rawData.currentEpochMetrics.epochNumber)}
+      ℹ️ ${bold("Current Epoch:")} ${code(
+        rawData.currentEpochMetrics.epochNumber
+      )}
 
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(
@@ -388,5 +418,21 @@ ${code(
       return unknownErrorMessage;
 
     return defaultErrorMessage;
+  }
+
+  private getBrowserHeaders(): RawAxiosRequestHeaders {
+    const userAgent = new UserAgent().toString();
+    const headers = {
+      Accept: "*/*",
+      "Accept-Language": "en-US,en;q=0.9",
+      Connection: "keep-alive",
+      Referer: "https://www.dashtec.xyz/",
+      "Sec-Fetch-Dest": "empty",
+      "Sec-Fetch-Mode": "cors",
+      "Sec-Fetch-Site": "same-origin",
+      TE: "trailers",
+      "User-Agent": userAgent,
+    };
+    return headers;
   }
 }

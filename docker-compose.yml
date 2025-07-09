@@ -9,4 +9,13 @@ services:
       - .:/app
     env_file:
       - .env
-    command: ["sh", "-c", "npm install --include=dev  && npm run start"]
+    environment:
+      - TZ=Europe/Rome # Imposta la variabile TimeZone per avere l'orario italiano nei logs
+    command: ["sh", "-c", "npm install --include=dev && npm run start"]
+    networks:
+      - tor-network
+
+networks:
+  tor-network:
+    external: true
+    driver: bridge

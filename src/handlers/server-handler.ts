@@ -75,6 +75,7 @@ export class ServerHandler {
     logger.info(
       `Received webhook update: ${JSON.stringify(
         {
+          user_id: message?.from?.id,
           firstname: message?.from?.first_name,
           username: message?.from?.username,
           language: message?.from?.language_code,

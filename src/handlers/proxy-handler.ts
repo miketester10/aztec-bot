@@ -87,7 +87,7 @@ export class ProxyHandler {
     const proxyUrl = `http://${username}:${password}@${host}:${port}`;
     logger.warn(`Proxy List lenght: ${this.proxiesList.length}`);
     logger.warn(`Used proxies lenght: ${this.usedProxies.size}`);
-    logger.warn(this.usedProxies);
+    logger.warn(Array.from(this.usedProxies));
     logger.debug(`Using proxy: ${proxyUrl}`);
 
     return new HttpsProxyAgent(proxyUrl);

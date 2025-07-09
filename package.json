@@ -13,6 +13,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "@types/user-agents": "^1.0.4",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
@@ -24,6 +25,7 @@
     "gramio": "^0.4.9",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
-    "socks-proxy-agent": "^8.0.5"
+    "socks-proxy-agent": "^8.0.5",
+    "user-agents": "^1.1.594"
   }
 }

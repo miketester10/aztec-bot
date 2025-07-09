@@ -211,15 +211,6 @@ export class CommandsHandler {
 Hi${username ? ` ${username}` : ""} 👋🏻
 I am ${bold("Aztec Bot 🤖")}
 
-To receive validator stats, use:
-${blockquote(code("/validator <wallet_address>"))}
-
-To receive top 10 validators all time, use:
-${blockquote(code("/top10"))}
-
-To receive current epoch stats, use:
-${blockquote(code("/epoch"))}
-
 To display complete list of commands, use:
 ${blockquote(code("/help"))}
 

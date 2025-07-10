@@ -480,7 +480,10 @@ ${code(
         : error.message;
       logger.error(`Axios Error: ${errorMessage}`);
 
-      return customErrorMessage || defaultErrorMessage;
+      if (customErrorMessage?.includes("Validator not found."))
+        return customErrorMessage;
+
+      return defaultErrorMessage;
     }
     const unknownErrorMessage = (error as Error).message;
     logger.error(`Unknown Error: ${unknownErrorMessage}`);

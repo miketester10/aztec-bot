@@ -50,6 +50,7 @@ export class ProxyHandler {
   //   ];
   private readonly proxiesList: string[] = [
     "38.154.227.167:5868:kwlgteuf:ccj5adj8for4",
+    "92.113.242.158:6742:kwlgteuf:ccj5adj8for4",
     "198.23.239.134:6540:kwlgteuf:ccj5adj8for4",
     "207.244.217.165:6712:kwlgteuf:ccj5adj8for4",
     "107.172.163.27:6543:kwlgteuf:ccj5adj8for4",

@@ -57,7 +57,6 @@ export class ProxyHandler {
     "136.0.207.84:6661:kwlgteuf:ccj5adj8for4",
     "64.64.118.149:6732:kwlgteuf:ccj5adj8for4",
     "142.147.128.93:6593:kwlgteuf:ccj5adj8for4",
-    "104.239.105.125:6655:kwlgteuf:ccj5adj8for4",
     "206.41.172.74:6634:kwlgteuf:ccj5adj8for4",
   ];
   private usedProxies: Set<string> = new Set();

@@ -281,8 +281,10 @@ export class AztecHandler {
       format`🔷 ${bold("NODE INFO")} 🔷
 
    ℹ️ ${bold("Version:")} ${code(`${version}`)} 
+   
    🌍 ${bold("Location:")} ${code(`${location}`)}
    🎯 ${bold("Coordinates:")} ${code(`${coordinate}`)}
+   
    🌱 ${bold("First seen:")} ${code(`${formattedFirstSeen}`)}
    👀 ${bold("Last seen:")} ${code(`${formattedLastSeen}`)}
    

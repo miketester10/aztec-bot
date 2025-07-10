@@ -35,6 +35,7 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import UserAgent from "user-agents";
 import { format as formatDate, parseISO } from "date-fns";
 import { ProxyHandler } from "./proxy-handler";
+import { headersProperties, referer } from "../consts/headers";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
@@ -66,7 +67,7 @@ export class AztecHandler {
   async getActiveNodesByCountry(): Promise<ActiveNodesByCountryResponse> {
     try {
       const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
+      const browserHeaders = this.getBrowserHeaders(referer.NETHERMIND); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<ActiveNodesByCountryResponse>(
         API.ACTIVE_NODES_BY_COUNTRY,
         {
@@ -92,7 +93,7 @@ export class AztecHandler {
   async getNodeInfo(peerId: string): Promise<NodeInfoResponse> {
     try {
       const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
+      const browserHeaders = this.getBrowserHeaders(referer.NETHERMIND); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<NodeInfoResponse>(
         `${API.NODE_INFO}?id=${peerId}`,
         {
@@ -119,7 +120,7 @@ export class AztecHandler {
   ): Promise<ValidatorStatsCombinedResponse> {
     try {
       const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
+      const browserHeaders = this.getBrowserHeaders(referer.DASHTEC); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<ValidatorStatsResponse>(
         `${API.VALIDATOR_STATS}/${validatorAddress}`,
         {
@@ -148,7 +149,7 @@ export class AztecHandler {
   async getTop10Validators(): Promise<TopValidatorsResponse> {
     try {
       const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
+      const browserHeaders = this.getBrowserHeaders(referer.DASHTEC); // headers più simili al browser per evitare possibili ban
       // const currentEpoch = (await this.getCurrentEpochStats())
       //   .currentEpochMetrics.epochNumber;
       const result = await axios.get<TopValidatorsResponse>(
@@ -171,7 +172,7 @@ export class AztecHandler {
     try {
       // throw new Error("API TEMPORARY NOT AVAILABLE.");
       const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
+      const browserHeaders = this.getBrowserHeaders(referer.DASHTEC); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<CurrentEpochStatsResponse>(
         API.CURRENT_EPOCH_STATS,
         {
@@ -497,7 +498,7 @@ ${code(
   private async getAllValidators(): Promise<AllValidatorsResponse> {
     try {
       const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
+      const browserHeaders = this.getBrowserHeaders(referer.DASHTEC); // headers più simili al browser per evitare possibili ban
       const result = await axios.get<AllValidatorsResponse>(
         `${API.VALIDATOR_STATS}`,
         {
@@ -516,17 +517,17 @@ ${code(
     }
   }
 
-  private getBrowserHeaders(): RawAxiosRequestHeaders {
+  private getBrowserHeaders(referer: string): RawAxiosRequestHeaders {
     const userAgent = new UserAgent().toString();
     const headers = {
-      Accept: "*/*",
-      "Accept-Language": "en-US,en;q=0.9",
-      Connection: "keep-alive",
-      Referer: "https://www.dashtec.xyz/",
-      "Sec-Fetch-Dest": "empty",
-      "Sec-Fetch-Mode": "cors",
-      "Sec-Fetch-Site": "same-origin",
-      TE: "trailers",
+      Accept: headersProperties.ACCEPT,
+      "Accept-Language": headersProperties.ACCEPT_LANGUAGE,
+      Connection: headersProperties.CONNECTION,
+      Referer: referer,
+      "Sec-Fetch-Dest": headersProperties.SEC_FETCH_DEST,
+      "Sec-Fetch-Mode": headersProperties.SEC_FETCH_MODE,
+      "Sec-Fetch-Site": headersProperties.SEC_FETCH_SITE,
+      TE: headersProperties.TE,
       "User-Agent": userAgent,
     };
     return headers;

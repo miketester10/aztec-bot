@@ -1,14 +1,14 @@
 import { ValidatorBase } from "./validator-base.interface";
-import { CurrentEpochStatsResponse } from "./current-epoch-stats-response.interface";
 
 export interface ValidatorStatsResponse extends ValidatorBase {
   proposerAddress: string;
   withdrawalCredentials: string;
   recentAttestations: RecentAttestation[];
   proposalHistory: ProposalHistory[];
+  votingHistory: any[];
   totalParticipatingEpochs: number;
   epochPerformanceHistory: EpochPerformanceHistory[];
-  currentEpochStats?: CurrentEpochStatsResponse;
+  x_user_id?: string;
 }
 
 interface RecentAttestation {

@@ -9,4 +9,6 @@ export interface ValidatorBase {
   totalBlocksProposed: number;
   totalBlocksMined: number;
   totalBlocksMissed: number;
+  x_handle?: string;
+  name?: string;
 }

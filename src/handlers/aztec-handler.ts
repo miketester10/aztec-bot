@@ -1,5 +1,10 @@
 import axios, { AxiosError, RawAxiosRequestHeaders } from "axios";
 import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
+import { ValidatorStatsCombinedResponse } from "../types/validator-stats-combined-response.type";
+import {
+  AllValidatorsResponse,
+  Validator,
+} from "../interfaces/all-validators-response.interface";
 import {
   TopValidatorsResponse,
   TopValidator,
@@ -111,7 +116,7 @@ export class AztecHandler {
 
   async getValidatorStats(
     validatorAddress: string
-  ): Promise<ValidatorStatsResponse> {
+  ): Promise<ValidatorStatsCombinedResponse> {
     try {
       const proxyAgent = this.proxyHandler.getRandomProxyAgent();
       const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
@@ -122,20 +127,19 @@ export class AztecHandler {
           headers: browserHeaders,
         }
       );
-
-      try {
-        const epochStats = await this.getCurrentEpochStats();
-        result.data.currentEpochStats = epochStats;
-      } catch (error) {
-        const unknownError = error as Error;
-        logger.error(
-          `ERROR IN getCurrentEpochStats(): ${unknownError.message}`
-        );
-      }
+      await this.checkWichIPmadeRequest(proxyAgent);
 
       logger.info(`Validator status: ${result.data.status}`);
 
-      return result.data;
+      let allValidators: AllValidatorsResponse | undefined;
+      try {
+        allValidators = await this.getAllValidators();
+      } catch (error) {
+        const unknownError = error as Error;
+        logger.error(`ERROR IN getAllValidators(): ${unknownError.message}`);
+      }
+
+      return { validatorStats: result.data, allValidators };
     } catch (error) {
       throw error;
     }
@@ -288,9 +292,10 @@ export class AztecHandler {
     return message;
   }
 
-  createFormattedMessageForValidatorStats(
-    rawData: ValidatorStatsResponse
-  ): FormattableString {
+  createFormattedMessageForValidatorStats({
+    validatorStats: rawData,
+    allValidators,
+  }: ValidatorStatsCombinedResponse): FormattableString {
     let status = "";
     switch (rawData.status) {
       case validatorStatus.ACTIVE:
@@ -301,10 +306,16 @@ export class AztecHandler {
         break;
     }
 
-    const totalActiveValidators =
-      rawData.currentEpochStats?.totalActiveValidators;
-    const totalInactiveValidators =
-      rawData.currentEpochStats?.totalInactiveValidators;
+    const totalActiveValidators = allValidators?.validators.filter(
+      (validator: Validator) => validator.status === validatorStatus.ACTIVE
+    ).length;
+    const totalInactiveValidators = allValidators?.validators.filter(
+      (validator: Validator) => validator.status === validatorStatus.EXITED
+    ).length;
+
+    const showNetworkInfo: boolean =
+      typeof totalActiveValidators === "number" &&
+      typeof totalInactiveValidators === "number";
 
     const attestationSuccessRate = (
       (rawData.totalAttestationsSucceeded /
@@ -354,7 +365,7 @@ export class AztecHandler {
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
 
       ${
-        totalActiveValidators && totalInactiveValidators
+        showNetworkInfo
           ? format`🌐 ${bold("NETWORK INFO")} 🌐
       🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
       🔴 ${bold("Total Inactive Validators:")} ${code(
@@ -476,6 +487,28 @@ ${code(
       return unknownErrorMessage;
 
     return defaultErrorMessage;
+  }
+
+  private async getAllValidators(): Promise<AllValidatorsResponse> {
+    try {
+      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
+      const browserHeaders = this.getBrowserHeaders(); // headers più simili al browser per evitare possibili ban
+      const result = await axios.get<AllValidatorsResponse>(
+        `${API.VALIDATOR_STATS}`,
+        {
+          httpsAgent: proxyAgent,
+          headers: browserHeaders,
+        }
+      );
+
+      await this.checkWichIPmadeRequest(proxyAgent);
+
+      logger.info(`Total validators: ${result.data.validators.length}`);
+
+      return result.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   private getBrowserHeaders(): RawAxiosRequestHeaders {

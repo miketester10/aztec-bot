@@ -20,6 +20,7 @@ export class ServerHandler {
   readonly WEBHOOK_URL: string = process.env.WEBHOOK_URL!;
   readonly WEBHOOK_PATH: string = process.env.WEBHOOK_PATH!;
   private readonly REDIS_HOST: string = process.env.REDIS_HOST!;
+  private readonly REDIS_PASSWORD: string = process.env.REDIS_PASSWORD!;
   private readonly REDIS_PORT: number = Number(process.env.REDIS_PORT!);
   private readonly EXPRESS_PORT: number = Number(process.env.EXPRESS_PORT!);
 
@@ -34,6 +35,7 @@ export class ServerHandler {
     const redisClient = new Redis({
       host: this.REDIS_HOST,
       port: this.REDIS_PORT,
+      password: this.REDIS_PASSWORD,
       enableOfflineQueue: false,
     })
       .on("connect", () => {

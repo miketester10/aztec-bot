@@ -25,8 +25,10 @@
     "express": "^5.1.0",
     "gramio": "^0.4.9",
     "https-proxy-agent": "^7.0.6",
+    "ioredis": "^5.6.1",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
+    "rate-limiter-flexible": "^7.1.1",
     "user-agents": "^1.1.594"
   }
 }

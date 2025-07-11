@@ -34,8 +34,8 @@ export class ServerHandler {
     // Setup Redis client
     const redisClient = new Redis({
       host: this.REDIS_HOST,
-      port: this.REDIS_PORT,
       password: this.REDIS_PASSWORD,
+      port: this.REDIS_PORT,
       enableOfflineQueue: false,
     })
       .on("connect", () => {

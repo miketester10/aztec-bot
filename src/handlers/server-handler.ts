@@ -48,7 +48,7 @@ export class ServerHandler {
       storeClient: redisClient,
       keyPrefix: "rl_user",
       points: 15, // Max 15 requests
-      duration: 300, // Per 5 minutes (300 seconds)
+      duration: 600, // Per 10 minutes (600 seconds)
       blockDuration: 1800, // Block for 30 minute (1800 seconds)
     });
   }
@@ -163,8 +163,8 @@ export class ServerHandler {
       return next();
     } catch (error) {
       // Rate limit exceeded: respond with 200 to prevent Telegram retries
+      res.sendStatus(200);
       logger.warn(`Rate limit exceeded for user ${message?.from?.id}`);
-      res.sendStatus(200); // evita retry da Telegram
 
       const formattedText = format`${code(
         "🚫 Please do not abuse the bot. Rate limit exceeded. Try again later."

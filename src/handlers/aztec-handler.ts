@@ -66,8 +66,8 @@ export class AztecHandler {
 
   async getActiveNodesByCountry(): Promise<ActiveNodesByCountryResponse> {
     try {
-      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(referer.NETHERMIND); // headers più simili al browser per evitare possibili ban
+      const { proxyAgent, browserHeaders } =
+        this.getProxyAgentAndBrowserHeaders(referer.NETHERMIND);
       const result = await axios.get<ActiveNodesByCountryResponse>(
         API.ACTIVE_NODES_BY_COUNTRY,
         {
@@ -76,7 +76,7 @@ export class AztecHandler {
         }
       );
 
-      await this.checkWichIPmadeRequest(proxyAgent);
+      this.checkWichIPmadeRequest(proxyAgent);
 
       const activeNodes = result.data.countries.reduce(
         (acc: number, country: Country) => acc + country.count,
@@ -92,8 +92,8 @@ export class AztecHandler {
 
   async getNodeInfo(peerId: string): Promise<NodeInfoResponse> {
     try {
-      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(referer.NETHERMIND); // headers più simili al browser per evitare possibili ban
+      const { proxyAgent, browserHeaders } =
+        this.getProxyAgentAndBrowserHeaders(referer.NETHERMIND);
       const result = await axios.get<NodeInfoResponse>(
         `${API.NODE_INFO}?id=${peerId}`,
         {
@@ -102,7 +102,7 @@ export class AztecHandler {
         }
       );
 
-      await this.checkWichIPmadeRequest(proxyAgent);
+      this.checkWichIPmadeRequest(proxyAgent);
 
       if (!result.data.peers) {
         throw new Error("Peer ID not found.");
@@ -119,8 +119,8 @@ export class AztecHandler {
     validatorAddress: string
   ): Promise<ValidatorStatsCombinedResponse> {
     try {
-      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(referer.DASHTEC); // headers più simili al browser per evitare possibili ban
+      const { proxyAgent, browserHeaders } =
+        this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
       const result = await axios.get<ValidatorStatsResponse>(
         `${API.VALIDATOR_STATS}/${validatorAddress}`,
         {
@@ -128,7 +128,8 @@ export class AztecHandler {
           headers: browserHeaders,
         }
       );
-      await this.checkWichIPmadeRequest(proxyAgent);
+
+      this.checkWichIPmadeRequest(proxyAgent);
 
       logger.info(`Validator status: ${result.data.status}`);
 
@@ -148,8 +149,8 @@ export class AztecHandler {
 
   async getTop10Validators(): Promise<TopValidatorsResponse> {
     try {
-      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(referer.DASHTEC); // headers più simili al browser per evitare possibili ban
+      const { proxyAgent, browserHeaders } =
+        this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
       // const currentEpoch = (await this.getCurrentEpochStats())
       //   .currentEpochMetrics.epochNumber;
       const result = await axios.get<TopValidatorsResponse>(
@@ -160,7 +161,7 @@ export class AztecHandler {
         }
       );
 
-      await this.checkWichIPmadeRequest(proxyAgent);
+      this.checkWichIPmadeRequest(proxyAgent);
 
       return result.data;
     } catch (error) {
@@ -170,9 +171,8 @@ export class AztecHandler {
 
   async getCurrentEpochStats(): Promise<CurrentEpochStatsResponse> {
     try {
-      // throw new Error("API TEMPORARY NOT AVAILABLE.");
-      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(referer.DASHTEC); // headers più simili al browser per evitare possibili ban
+      const { proxyAgent, browserHeaders } =
+        this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
       const result = await axios.get<CurrentEpochStatsResponse>(
         API.CURRENT_EPOCH_STATS,
         {
@@ -181,7 +181,7 @@ export class AztecHandler {
         }
       );
 
-      await this.checkWichIPmadeRequest(proxyAgent);
+      this.checkWichIPmadeRequest(proxyAgent);
 
       if (
         result.data.totalActiveValidators.toString().includes("Stolen Data") ||
@@ -497,8 +497,8 @@ ${code(
 
   private async getAllValidators(): Promise<AllValidatorsResponse> {
     try {
-      const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-      const browserHeaders = this.getBrowserHeaders(referer.DASHTEC); // headers più simili al browser per evitare possibili ban
+      const { proxyAgent, browserHeaders } =
+        this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
       const result = await axios.get<AllValidatorsResponse>(
         `${API.VALIDATOR_STATS}`,
         {
@@ -507,7 +507,7 @@ ${code(
         }
       );
 
-      await this.checkWichIPmadeRequest(proxyAgent);
+      this.checkWichIPmadeRequest(proxyAgent);
 
       logger.info(`Total validators: ${result.data.validators.length}`);
 
@@ -515,6 +515,15 @@ ${code(
     } catch (error) {
       throw error;
     }
+  }
+
+  private getProxyAgentAndBrowserHeaders(referer: string): {
+    proxyAgent: HttpsProxyAgent<string>;
+    browserHeaders: RawAxiosRequestHeaders;
+  } {
+    const proxyAgent = this.proxyHandler.getRandomProxyAgent();
+    const browserHeaders = this.getBrowserHeaders(referer); // headers più simili al browser per evitare possibili ban
+    return { proxyAgent, browserHeaders };
   }
 
   private getBrowserHeaders(referer: string): RawAxiosRequestHeaders {
@@ -533,16 +542,8 @@ ${code(
     return headers;
   }
 
-  private async checkWichIPmadeRequest(
-    proxyAgent: HttpsProxyAgent<string>
-  ): Promise<void> {
-    try {
-      const result = await axios.get("https://ifconfig.me", {
-        httpsAgent: proxyAgent,
-      });
-      logger.debug(`Request made with IP: ${result.data}`);
-    } catch (error) {
-      logger.error(`Error while getting IP: ${(error as Error).message}`);
-    }
+  private checkWichIPmadeRequest(proxyAgent: HttpsProxyAgent<string>): void {
+    const usedIP = proxyAgent.connectOpts.host;
+    if (usedIP) logger.debug(`Request made with IP: ${usedIP}`);
   }
 }

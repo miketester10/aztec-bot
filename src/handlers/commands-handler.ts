@@ -191,7 +191,7 @@ export class CommandsHandler {
   async handleEpochCommand(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
     try {
-      const result = await this.aztecHandler.getCurrentEpochStats();
+      const result = await this.aztecHandler.getCurrentEpochStats(ctx);
       const message =
         this.aztecHandler.createFormattedMessageForEpochStats(result);
       await ctx.reply(message);

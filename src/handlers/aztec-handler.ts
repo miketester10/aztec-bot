@@ -37,10 +37,13 @@ import { format as formatDate, parseISO } from "date-fns";
 import { ProxyHandler } from "./proxy-handler";
 import { headersProperties, referer } from "../consts/headers";
 import { ProxyAgentAndBrowserHeaders } from "../types/proxy-agent-and-browser-headers.type";
+import { ServerHandler } from "./server-handler";
+import { MyMessageContext } from "../interfaces/custom-context.interface";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
   private readonly proxyHandler: ProxyHandler = ProxyHandler.getInstance();
+  private readonly serverHandler: ServerHandler = ServerHandler.getInstance();
 
   private constructor() {}
 
@@ -170,7 +173,9 @@ export class AztecHandler {
     }
   }
 
-  async getCurrentEpochStats(): Promise<CurrentEpochStatsResponse> {
+  async getCurrentEpochStats(
+    ctx: MyMessageContext
+  ): Promise<CurrentEpochStatsResponse> {
     try {
       const { proxyAgent, browserHeaders } =
         this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
@@ -196,6 +201,10 @@ export class AztecHandler {
 
       return result.data;
     } catch (error) {
+      // Add 1 point to user in case of error, because the middleware consumed 1 point before knowing the outcome of the API request.
+      const userID = ctx.from?.id!;
+      this.serverHandler.rateLimiter.reward(userID, 1);
+
       throw error;
     }
   }

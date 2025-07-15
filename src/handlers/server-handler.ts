@@ -27,8 +27,7 @@ export class ServerHandler {
   private static _instance: ServerHandler;
   private readonly app: express.Application = express();
   private bot: Bot | undefined;
-  private allowedCommands: string[] | undefined;
-  private rateLimiter: RateLimiterRedis;
+  rateLimiter: RateLimiterRedis;
 
   private constructor() {
     // Setup Redis client
@@ -49,8 +48,8 @@ export class ServerHandler {
     this.rateLimiter = new RateLimiterRedis({
       storeClient: redisClient,
       keyPrefix: "rl_user",
-      points: 15, // Max 15 requests
-      duration: 600, // Per 10 minutes (600 seconds)
+      points: 2, // Max 2 requests
+      duration: 240, // Per 4 minutes (240 seconds)
       blockDuration: 1800, // Block for 30 minute (1800 seconds)
     });
   }
@@ -65,16 +64,10 @@ export class ServerHandler {
   async startServer(bot: Bot): Promise<Server> {
     // Assign bot instance
     this.bot = bot;
-    // Load commands
-    await this.loadCommands().catch((error) => {
-      logger.error(
-        `❌ Unknown Error while loading commands:: ${(error as Error).message}`
-      );
-    });
 
     // Setup Middleware
     this.app.use(express.json());
-  
+
     // Setup Health route
     this.app.get("/health", (req: Request, res: Response) => {
       res.status(200).json({ status: "OK" });
@@ -144,15 +137,11 @@ export class ServerHandler {
     const text = message?.text?.trim();
     const command = text?.split(" ")[0];
 
-    // If allowed commands are loaded, check if the command is valid
-    // Otherwise, fallback: treat all messages as valid (apply rate limiter to everything)
-    const isValidCommand =
-      Array.isArray(this.allowedCommands) && this.allowedCommands.length > 0
-        ? this.allowedCommands.includes(command!)
-        : true;
+    // Check if the command is /epoch (apply rate limiter to this command only)
+    const isEpochCommand = command === "/epoch";
 
-    if (!isValidCommand || userID === roles.ADMIN) {
-      return next(); // Skip rate limit if it's not a recognized command or if the user is an admin
+    if (!isEpochCommand || userID === roles.ADMIN) {
+      return next(); // Skip rate limit if it's not /epoch command or if the user is an admin
     }
 
     try {
@@ -165,7 +154,7 @@ export class ServerHandler {
       logger.warn(`Rate limit exceeded for user ${message?.from?.id}`);
 
       const formattedText = format`${code(
-        "🚫 Please do not abuse the bot. Rate limit exceeded. Try again later."
+        "🚫 Please do not abuse this command. Rate limit exceeded. Try again later."
       )}`;
 
       await this.bot?.api.sendMessage({
@@ -174,13 +163,5 @@ export class ServerHandler {
         reply_parameters: { message_id: message?.message_id! },
       });
     }
-  }
-
-  private async loadCommands(): Promise<void> {
-    const commands: TelegramBotCommand[] | undefined =
-      await this.bot?.api.getMyCommands();
-    this.allowedCommands = commands?.map(
-      (c: TelegramBotCommand) => `/${c.command}`
-    );
   }
 }

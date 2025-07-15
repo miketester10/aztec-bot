@@ -36,6 +36,7 @@ import UserAgent from "user-agents";
 import { format as formatDate, parseISO } from "date-fns";
 import { ProxyHandler } from "./proxy-handler";
 import { headersProperties, referer } from "../consts/headers";
+import { ProxyAgentAndBrowserHeaders } from "../types/proxy-agent-and-browser-headers.type";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
@@ -517,18 +518,13 @@ ${code(
     }
   }
 
-  private getProxyAgentAndBrowserHeaders(referer: string): {
-    proxyAgent: HttpsProxyAgent<string>;
-    browserHeaders: RawAxiosRequestHeaders;
-  } {
+  private getProxyAgentAndBrowserHeaders(
+    referer: string
+  ): ProxyAgentAndBrowserHeaders {
     const proxyAgent = this.proxyHandler.getRandomProxyAgent();
-    const browserHeaders = this.getBrowserHeaders(referer); // headers più simili al browser per evitare possibili ban
-    return { proxyAgent, browserHeaders };
-  }
 
-  private getBrowserHeaders(referer: string): RawAxiosRequestHeaders {
     const userAgent = new UserAgent().toString();
-    const headers = {
+    const browserHeaders: RawAxiosRequestHeaders = {
       Accept: headersProperties.ACCEPT,
       "Accept-Language": headersProperties.ACCEPT_LANGUAGE,
       Connection: headersProperties.CONNECTION,
@@ -539,7 +535,7 @@ ${code(
       TE: headersProperties.TE,
       "User-Agent": userAgent,
     };
-    return headers;
+    return { proxyAgent, browserHeaders };
   }
 
   private checkWichIPmadeRequest(proxyAgent: HttpsProxyAgent<string>): void {

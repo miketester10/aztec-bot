@@ -1,0 +1,48 @@
+name: 🚀 Deploy AztecBot sulla VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: ⚙️ Deploy su VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Clona il repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 Aggiunge la chiave SSH privata
+        run: |
+          echo "${{ secrets.VPS_SSH_KEY }}" > /tmp/ssh_key
+          chmod 600 /tmp/ssh_key
+
+      - name: 🚀 Deploy via SSH alla VPS (con riavvio Container solo se necessario)
+        run: |
+          echo "🔐 Connessione SSH alla VPS..."
+          ssh -i /tmp/ssh_key -o StrictHostKeyChecking=no "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+
+            echo "📁 [1/4] Entrata nella directory del progetto..."
+            cd /home/ubuntu/aztec-bot  # Modifica se la tua directory è diversa
+
+            echo "📥 [2/4] Eseguo git pull..."
+            OUTPUT=$(git pull origin main)
+
+            echo "🔍 Verifico se ci sono modifiche..."
+            if [[ "$OUTPUT" == *"Already up to date."* ]]; then
+              echo "ℹ️ Nessuna modifica trovata, il container non verrà riavviato."
+            else
+              echo "✅ Modifiche trovate:"
+              echo "$OUTPUT"
+
+              echo "🛑 [3/4] Stop del container esistente..."
+              docker compose stop
+
+              echo "▶️ [4/4] Avvio del container aggiornato..."
+              docker compose up -d
+
+              echo "🎉 Deploy completato con successo!"
+            fi
+          EOF

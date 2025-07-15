@@ -26,7 +26,7 @@ export class ServerHandler {
 
   private static _instance: ServerHandler;
   private readonly app: express.Application = express();
-  private bot: Bot | undefined;
+  private bot!: Bot
   rateLimiter: RateLimiterRedis;
 
   private constructor() {
@@ -157,7 +157,7 @@ export class ServerHandler {
         "🚫 Please do not abuse this command. Rate limit exceeded. Try again later."
       )}`;
 
-      await this.bot?.api.sendMessage({
+      await this.bot.api.sendMessage({
         chat_id: message?.from?.id!,
         text: formattedText,
         reply_parameters: { message_id: message?.message_id! },

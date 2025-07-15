@@ -26,7 +26,7 @@ export class ServerHandler {
 
   private static _instance: ServerHandler;
   private readonly app: express.Application = express();
-  private bot!: Bot
+  private bot!: Bot;
   rateLimiter: RateLimiterRedis;
 
   private constructor() {
@@ -158,7 +158,7 @@ export class ServerHandler {
       )}`;
 
       await this.bot.api.sendMessage({
-        chat_id: message?.from?.id!,
+        chat_id: userID,
         text: formattedText,
         reply_parameters: { message_id: message?.message_id! },
       });

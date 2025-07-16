@@ -134,7 +134,7 @@ export class ServerHandler {
     } catch (error) {
       // Rate limit exceeded: respond with 200 to prevent Telegram retries
       res.sendStatus(200);
-      logger.warn(`Rate limit exceeded for user ${message?.from?.id}`);
+      logger.warn(`Rate limit exceeded for user ${userID}`);
 
       const formattedText = format`${code("🚫 Please do not abuse this command. Rate limit exceeded. Try again later.")}`;
 

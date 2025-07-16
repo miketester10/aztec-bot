@@ -245,10 +245,29 @@ export class AztecHandler {
         break;
     }
 
-    const totalActiveValidators = allValidators?.validators.filter((validator: Validator) => validator.status === validatorStatus.ACTIVE).length;
-    const totalInactiveValidators = allValidators?.validators.filter((validator: Validator) => validator.status === validatorStatus.EXITED).length;
+    const showRankingAndNetworkInfo = allValidators ? true : false;
+    // Sort validators descending by performanceScore
+    const sortedValidatorsDESC = allValidators?.validators.sort((a: Validator, b: Validator) => b.performanceScore - a.performanceScore);
 
-    const showNetworkInfo: boolean = typeof totalActiveValidators === "number" && typeof totalInactiveValidators === "number";
+    let totalActiveValidators = 0;
+    let totalInactiveValidators = 0;
+
+    const validatorRank = { rank: -1, emoji: "" };
+
+    sortedValidatorsDESC?.forEach((validator, _index) => {
+      // Find the rank and emoji for the target validator
+      if (validator.address === rawData.address) {
+        validatorRank.rank = _index + 1;
+        validatorRank.emoji = _index === 0 ? "🥇" : _index === 1 ? "🥈" : _index === 2 ? "🥉" : "";
+      }
+
+      // Count active and inactive validators
+      if (validator.status === validatorStatus.ACTIVE) {
+        totalActiveValidators++;
+      } else if (validator.status === validatorStatus.EXITED) {
+        totalInactiveValidators++;
+      }
+    });
 
     const attestationSuccessRate = ((rawData.totalAttestationsSucceeded / (rawData.totalAttestationsSucceeded + rawData.totalAttestationsMissed)) * 100).toFixed(1);
 
@@ -261,6 +280,7 @@ export class AztecHandler {
     const message = format`${blockquote(format`🔷 ${bold("VALIDATOR DETAILS")} 🔷
 
       ℹ️ ${bold("Status:")} ${status} 
+      ${showRankingAndNetworkInfo ? format`🏆 ${bold("Ranking:")} ${code(`${validatorRank.rank}${validatorRank.emoji}`)} ` : ""}
 
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
@@ -281,7 +301,7 @@ export class AztecHandler {
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
 
       ${
-        showNetworkInfo
+        showRankingAndNetworkInfo
           ? format`🌐 ${bold("NETWORK INFO")} 🌐
       🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
       🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}`

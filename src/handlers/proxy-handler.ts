@@ -21,11 +21,8 @@ export class ProxyHandler {
       this.usedProxies.clear();
     }
 
-    const availableProxies = this.proxiesList.filter(
-      (proxy: string) => !this.usedProxies.has(proxy)
-    );
-    const randomProxy =
-      availableProxies[Math.floor(Math.random() * availableProxies.length)];
+    const availableProxies = this.proxiesList.filter((proxy: string) => !this.usedProxies.has(proxy));
+    const randomProxy = availableProxies[Math.floor(Math.random() * availableProxies.length)];
     this.usedProxies.add(randomProxy);
 
     const [host, port, username, password] = randomProxy.split(":");

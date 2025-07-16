@@ -1,35 +1,16 @@
 import axios, { AxiosError, RawAxiosRequestHeaders } from "axios";
 import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
 import { ValidatorStatsCombinedResponse } from "../types/validator-stats-combined-response.type";
-import {
-  AllValidatorsResponse,
-  Validator,
-} from "../interfaces/all-validators-response.interface";
-import {
-  TopValidatorsResponse,
-  TopValidator,
-} from "../interfaces/top-validators-response.interface";
+import { AllValidatorsResponse, Validator } from "../interfaces/all-validators-response.interface";
+import { TopValidatorsResponse, TopValidator } from "../interfaces/top-validators-response.interface";
 import { CurrentEpochStatsResponse } from "../interfaces/current-epoch-stats-response.interface";
 import { ErrorResponse } from "../interfaces/error-response.interface";
 import { API } from "../consts/api";
 import { logger } from "../logger/logger";
-import {
-  blockquote,
-  bold,
-  code,
-  format,
-  FormattableString,
-  italic,
-} from "gramio";
-import {
-  validatorStatus,
-  validatorStatusMessage,
-} from "../consts/validator-status";
+import { blockquote, bold, code, format, FormattableString, italic } from "gramio";
+import { validatorStatus, validatorStatusMessage } from "../consts/validator-status";
 import { NetworkHealthResponse } from "../interfaces/network-health-response.interface";
-import {
-  ActiveNodesByCountryResponse,
-  Country,
-} from "../interfaces/active-nodes-by-country-response.interface";
+import { ActiveNodesByCountryResponse, Country } from "../interfaces/active-nodes-by-country-response.interface";
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import UserAgent from "user-agents";
@@ -58,9 +39,7 @@ export class AztecHandler {
     try {
       const result = await axios.get<NetworkHealthResponse>(API.NETWORK_HEALTH);
 
-      logger.info(
-        `Pending Block: ${result.data[4].height}, Proven Block: ${result.data[1].height}, Current Slot: ${result.data[4].header.globalVariables.slotNumber}`
-      );
+      logger.info(`Pending Block: ${result.data[4].height}, Proven Block: ${result.data[1].height}, Current Slot: ${result.data[4].header.globalVariables.slotNumber}`);
 
       return result.data;
     } catch (error) {
@@ -70,22 +49,15 @@ export class AztecHandler {
 
   async getActiveNodesByCountry(): Promise<ActiveNodesByCountryResponse> {
     try {
-      const { proxyAgent, browserHeaders } =
-        this.getProxyAgentAndBrowserHeaders(referer.NETHERMIND);
-      const result = await axios.get<ActiveNodesByCountryResponse>(
-        API.ACTIVE_NODES_BY_COUNTRY,
-        {
-          httpsAgent: proxyAgent,
-          headers: browserHeaders,
-        }
-      );
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.NETHERMIND);
+      const result = await axios.get<ActiveNodesByCountryResponse>(API.ACTIVE_NODES_BY_COUNTRY, {
+        httpsAgent: proxyAgent,
+        headers: browserHeaders,
+      });
 
       this.checkWichIPmadeRequest(proxyAgent);
 
-      const activeNodes = result.data.countries.reduce(
-        (acc: number, country: Country) => acc + country.count,
-        0
-      );
+      const activeNodes = result.data.countries.reduce((acc: number, country: Country) => acc + country.count, 0);
       logger.info(`Active nodes: ${activeNodes}`);
 
       return result.data;
@@ -96,15 +68,11 @@ export class AztecHandler {
 
   async getNodeInfo(peerId: string): Promise<NodeInfoResponse> {
     try {
-      const { proxyAgent, browserHeaders } =
-        this.getProxyAgentAndBrowserHeaders(referer.NETHERMIND);
-      const result = await axios.get<NodeInfoResponse>(
-        `${API.NODE_INFO}?id=${peerId}`,
-        {
-          httpsAgent: proxyAgent,
-          headers: browserHeaders,
-        }
-      );
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.NETHERMIND);
+      const result = await axios.get<NodeInfoResponse>(`${API.NODE_INFO}?id=${peerId}`, {
+        httpsAgent: proxyAgent,
+        headers: browserHeaders,
+      });
 
       this.checkWichIPmadeRequest(proxyAgent);
 
@@ -119,19 +87,13 @@ export class AztecHandler {
     }
   }
 
-  async getValidatorStats(
-    validatorAddress: string
-  ): Promise<ValidatorStatsCombinedResponse> {
+  async getValidatorStats(validatorAddress: string): Promise<ValidatorStatsCombinedResponse> {
     try {
-      const { proxyAgent, browserHeaders } =
-        this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
-      const result = await axios.get<ValidatorStatsResponse>(
-        `${API.VALIDATOR_STATS}/${validatorAddress}`,
-        {
-          httpsAgent: proxyAgent,
-          headers: browserHeaders,
-        }
-      );
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const result = await axios.get<ValidatorStatsResponse>(`${API.VALIDATOR_STATS}/${validatorAddress}`, {
+        httpsAgent: proxyAgent,
+        headers: browserHeaders,
+      });
 
       this.checkWichIPmadeRequest(proxyAgent);
 
@@ -153,17 +115,13 @@ export class AztecHandler {
 
   async getTop10Validators(): Promise<TopValidatorsResponse> {
     try {
-      const { proxyAgent, browserHeaders } =
-        this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
       // const currentEpoch = (await this.getCurrentEpochStats())
       //   .currentEpochMetrics.epochNumber;
-      const result = await axios.get<TopValidatorsResponse>(
-        `${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=99999`,
-        {
-          httpsAgent: proxyAgent,
-          headers: browserHeaders,
-        }
-      );
+      const result = await axios.get<TopValidatorsResponse>(`${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=99999`, {
+        httpsAgent: proxyAgent,
+        headers: browserHeaders,
+      });
 
       this.checkWichIPmadeRequest(proxyAgent);
 
@@ -173,31 +131,20 @@ export class AztecHandler {
     }
   }
 
-  async getCurrentEpochStats(
-    ctx: MyMessageContext
-  ): Promise<CurrentEpochStatsResponse> {
+  async getCurrentEpochStats(ctx: MyMessageContext): Promise<CurrentEpochStatsResponse> {
     try {
-      const { proxyAgent, browserHeaders } =
-        this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
-      const result = await axios.get<CurrentEpochStatsResponse>(
-        API.CURRENT_EPOCH_STATS,
-        {
-          httpsAgent: proxyAgent,
-          headers: browserHeaders,
-        }
-      );
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const result = await axios.get<CurrentEpochStatsResponse>(API.CURRENT_EPOCH_STATS, {
+        httpsAgent: proxyAgent,
+        headers: browserHeaders,
+      });
 
       this.checkWichIPmadeRequest(proxyAgent);
 
-      if (
-        result.data.totalActiveValidators.toString().includes("Stolen Data") ||
-        result.data.currentEpochMetrics.epochNumber === 9999
-      ) {
+      if (result.data.totalActiveValidators.toString().includes("Stolen Data") || result.data.currentEpochMetrics.epochNumber === 9999) {
         throw new Error("IP banned by DASHTEC API");
       }
-      logger.info(
-        `Current epoch: ${result.data.currentEpochMetrics.epochNumber}`
-      );
+      logger.info(`Current epoch: ${result.data.currentEpochMetrics.epochNumber}`);
 
       return result.data;
     } catch (error) {
@@ -209,17 +156,13 @@ export class AztecHandler {
     }
   }
 
-  createFormattedMessageForNetworkHealth(
-    rawData: NetworkHealthResponse
-  ): FormattableString {
+  createFormattedMessageForNetworkHealth(rawData: NetworkHealthResponse): FormattableString {
     const message = format`${blockquote(
       format`🔷 ${bold("NETWORK HEALTH")} 🔷
 
       🏗️ ${bold("Pending Block:")} ${code(rawData[4].height)} 
       🧱 ${bold("Proven Block:")} ${code(rawData[1].height)} 
-      🎰 ${bold("Current Slot:")} ${code(
-        rawData[4].header.globalVariables.slotNumber
-      )}
+      🎰 ${bold("Current Slot:")} ${code(rawData[4].header.globalVariables.slotNumber)}
       
       
       `
@@ -228,23 +171,16 @@ export class AztecHandler {
     return message;
   }
 
-  createFormattedMessageForActiveNodesByCountry(
-    rawData: ActiveNodesByCountryResponse
-  ): FormattableString {
-    const totalActiveNodes = rawData.countries.reduce(
-      (acc: number, country: Country) => acc + country.count,
-      0
-    );
+  createFormattedMessageForActiveNodesByCountry(rawData: ActiveNodesByCountryResponse): FormattableString {
+    const totalActiveNodes = rawData.countries.reduce((acc: number, country: Country) => acc + country.count, 0);
 
-    const countriesWithPercentage: Country[] = rawData.countries.map(
-      (c: Country) => {
-        const percentage = ((c.count / totalActiveNodes) * 100).toFixed(2);
-        return {
-          ...c,
-          percentage,
-        };
-      }
-    );
+    const countriesWithPercentage: Country[] = rawData.countries.map((c: Country) => {
+      const percentage = ((c.count / totalActiveNodes) * 100).toFixed(2);
+      return {
+        ...c,
+        percentage,
+      };
+    });
 
     const top10Countries: Country[] = countriesWithPercentage.slice(0, 10);
 
@@ -261,26 +197,19 @@ export class AztecHandler {
       else if (_index === 2) medal = "🥉";
       else medal = "🔹";
 
-      return format`${bold(`${medal} ${c.country_name}:`)} ${code(
-        `${c.count}`
-      )} ${italic(`(${c.percentage}%)`)}\n`;
+      return format`${bold(`${medal} ${c.country_name}:`)} ${code(`${c.count}`)} ${italic(`(${c.percentage}%)`)}\n`;
     })}`
     )}`;
 
     return message;
   }
 
-  createFormattedMessageForNodeInfo(
-    rawData: NodeInfoResponse
-  ): FormattableString {
+  createFormattedMessageForNodeInfo(rawData: NodeInfoResponse): FormattableString {
     const version = rawData.peers![0].client;
-    const country =
-      rawData.peers![0].multi_addresses[0].ip_info[0].country_name;
+    const country = rawData.peers![0].multi_addresses[0].ip_info[0].country_name;
     const city = rawData.peers![0].multi_addresses[0].ip_info[0].city_name;
     const location = `${city ? `${country}, ${city}` : country}`;
-    const coordinate = `Lat. ${
-      rawData.peers![0].multi_addresses[0].ip_info[0].latitude
-    } - Long. ${rawData.peers![0].multi_addresses[0].ip_info[0].longitude}`;
+    const coordinate = `Lat. ${rawData.peers![0].multi_addresses[0].ip_info[0].latitude} - Long. ${rawData.peers![0].multi_addresses[0].ip_info[0].longitude}`;
 
     const firstSeen = parseISO(rawData.peers![0].created_at);
     const lastSeen = parseISO(rawData.peers![0].last_seen);
@@ -305,10 +234,7 @@ export class AztecHandler {
     return message;
   }
 
-  createFormattedMessageForValidatorStats({
-    validatorStats: rawData,
-    allValidators,
-  }: ValidatorStatsCombinedResponse): FormattableString {
+  createFormattedMessageForValidatorStats({ validatorStats: rawData, allValidators }: ValidatorStatsCombinedResponse): FormattableString {
     let status = "";
     switch (rawData.status) {
       case validatorStatus.ACTIVE:
@@ -319,41 +245,20 @@ export class AztecHandler {
         break;
     }
 
-    const totalActiveValidators = allValidators?.validators.filter(
-      (validator: Validator) => validator.status === validatorStatus.ACTIVE
-    ).length;
-    const totalInactiveValidators = allValidators?.validators.filter(
-      (validator: Validator) => validator.status === validatorStatus.EXITED
-    ).length;
+    const totalActiveValidators = allValidators?.validators.filter((validator: Validator) => validator.status === validatorStatus.ACTIVE).length;
+    const totalInactiveValidators = allValidators?.validators.filter((validator: Validator) => validator.status === validatorStatus.EXITED).length;
 
-    const showNetworkInfo: boolean =
-      typeof totalActiveValidators === "number" &&
-      typeof totalInactiveValidators === "number";
+    const showNetworkInfo: boolean = typeof totalActiveValidators === "number" && typeof totalInactiveValidators === "number";
 
-    const attestationSuccessRate = (
-      (rawData.totalAttestationsSucceeded /
-        (rawData.totalAttestationsSucceeded +
-          rawData.totalAttestationsMissed)) *
-      100
-    ).toFixed(1);
+    const attestationSuccessRate = ((rawData.totalAttestationsSucceeded / (rawData.totalAttestationsSucceeded + rawData.totalAttestationsMissed)) * 100).toFixed(1);
 
-    const attestationMissRate = (100 - Number(attestationSuccessRate)).toFixed(
-      1
-    );
+    const attestationMissRate = (100 - Number(attestationSuccessRate)).toFixed(1);
 
-    const proposalSuccessRate = (
-      ((rawData.totalBlocksProposed + rawData.totalBlocksMined) /
-        (rawData.totalBlocksProposed +
-          rawData.totalBlocksMined +
-          rawData.totalBlocksMissed)) *
-      100
-    ).toFixed(1);
+    const proposalSuccessRate = (((rawData.totalBlocksProposed + rawData.totalBlocksMined) / (rawData.totalBlocksProposed + rawData.totalBlocksMined + rawData.totalBlocksMissed)) * 100).toFixed(1);
 
     const proposalMissRate = (100 - Number(proposalSuccessRate)).toFixed(1);
 
-    const message = format`${blockquote(format`🔷 ${bold(
-      "VALIDATOR DETAILS"
-    )} 🔷
+    const message = format`${blockquote(format`🔷 ${bold("VALIDATOR DETAILS")} 🔷
 
       ℹ️ ${bold("Status:")} ${status} 
 
@@ -370,9 +275,7 @@ export class AztecHandler {
       📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     
-      ✅ ${bold("Successful (Proposed/Mined):")} ${code(
-      `${rawData.totalBlocksProposed + rawData.totalBlocksMined}`
-    )}
+      ✅ ${bold("Successful (Proposed/Mined):")} ${code(`${rawData.totalBlocksProposed + rawData.totalBlocksMined}`)}
       ❌ ${bold("Missed:")} ${code(`${rawData.totalBlocksMissed}`)}
       📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
@@ -381,9 +284,7 @@ export class AztecHandler {
         showNetworkInfo
           ? format`🌐 ${bold("NETWORK INFO")} 🌐
       🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
-      🔴 ${bold("Total Inactive Validators:")} ${code(
-              `${totalInactiveValidators}`
-            )}`
+      🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}`
           : ""
       } 
 
@@ -392,9 +293,7 @@ export class AztecHandler {
     return message;
   }
 
-  createFormattedMessageForTop10Validators(
-    rawData: TopValidatorsResponse
-  ): FormattableString {
+  createFormattedMessageForTop10Validators(rawData: TopValidatorsResponse): FormattableString {
     const message = format`${blockquote(
       format`🏆 ${bold("TOP 10 VALIDATORS ALL TIME")} 🏆
     
@@ -417,24 +316,13 @@ ${code(
     return message;
   }
 
-  createFormattedMessageForEpochStats(
-    rawData: CurrentEpochStatsResponse
-  ): FormattableString {
-    const attestationSuccessRate = (
-      (rawData.currentEpochMetrics.successCount /
-        (rawData.currentEpochMetrics.successCount +
-          rawData.currentEpochMetrics.missCount)) *
-      100
-    ).toFixed(2);
+  createFormattedMessageForEpochStats(rawData: CurrentEpochStatsResponse): FormattableString {
+    const attestationSuccessRate = ((rawData.currentEpochMetrics.successCount / (rawData.currentEpochMetrics.successCount + rawData.currentEpochMetrics.missCount)) * 100).toFixed(2);
 
-    const attestationMissRate = (100 - Number(attestationSuccessRate)).toFixed(
-      2
-    );
+    const attestationMissRate = (100 - Number(attestationSuccessRate)).toFixed(2);
 
     const proposalSuccessRate = (
-      (rawData.currentEpochMetrics.epochBlockProducedVolume /
-        (rawData.currentEpochMetrics.epochBlockProducedVolume +
-          rawData.currentEpochMetrics.epochBlockMissedVolume)) *
+      (rawData.currentEpochMetrics.epochBlockProducedVolume / (rawData.currentEpochMetrics.epochBlockProducedVolume + rawData.currentEpochMetrics.epochBlockMissedVolume)) *
       100
     ).toFixed(2);
 
@@ -443,35 +331,23 @@ ${code(
     const message = format`${blockquote(
       format`🔷 ${bold("EPOCH DETAILS")} 🔷
 
-      ℹ️ ${bold("Current Epoch:")} ${code(
-        rawData.currentEpochMetrics.epochNumber
-      )}
+      ℹ️ ${bold("Current Epoch:")} ${code(rawData.currentEpochMetrics.epochNumber)}
 
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
-      ✅ ${bold("Successful:")} ${code(
-        rawData.currentEpochMetrics.successCount
-      )}
+      ✅ ${bold("Successful:")} ${code(rawData.currentEpochMetrics.successCount)}
       ❌ ${bold("Missed:")} ${code(rawData.currentEpochMetrics.missCount)}
       📈 ${bold("Success Rate:")} ${code(`${attestationSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     
-      ✅ ${bold("Successful (Proposed/Mined):")} ${code(
-        `${rawData.currentEpochMetrics.epochBlockProducedVolume}`
-      )}
-      ❌ ${bold("Missed:")} ${code(
-        `${rawData.currentEpochMetrics.epochBlockMissedVolume}`
-      )}
+      ✅ ${bold("Successful (Proposed/Mined):")} ${code(`${rawData.currentEpochMetrics.epochBlockProducedVolume}`)}
+      ❌ ${bold("Missed:")} ${code(`${rawData.currentEpochMetrics.epochBlockMissedVolume}`)}
       📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
 
       🌐 ${bold("NETWORK INFO")} 🌐
-      🟢 ${bold("Total Active Validators:")} ${code(
-        `${rawData.totalActiveValidators}`
-      )}
-      🔴 ${bold("Total Inactive Validators:")} ${code(
-        `${rawData.totalInactiveValidators}`
-      )}
+      🟢 ${bold("Total Active Validators:")} ${code(`${rawData.totalActiveValidators}`)}
+      🔴 ${bold("Total Inactive Validators:")} ${code(`${rawData.totalInactiveValidators}`)}
       
       
       `
@@ -484,38 +360,29 @@ ${code(
     const defaultErrorMessage = "An error occurred. Please try again later.";
 
     if (axios.isAxiosError(error)) {
-      const customErrorMessage = (error as AxiosError<ErrorResponse>).response
-        ?.data.error;
-      const errorMessage = customErrorMessage
-        ? customErrorMessage
-        : error.message;
+      const customErrorMessage = (error as AxiosError<ErrorResponse>).response?.data.error;
+      const errorMessage = customErrorMessage ? customErrorMessage : error.message;
       logger.error(`Axios Error: ${errorMessage}`);
 
-      if (customErrorMessage?.includes("Validator not found."))
-        return customErrorMessage;
+      if (customErrorMessage?.includes("Validator not found.")) return customErrorMessage;
 
       return defaultErrorMessage;
     }
     const unknownErrorMessage = (error as Error).message;
     logger.error(`Unknown Error: ${unknownErrorMessage}`);
 
-    if (unknownErrorMessage.includes("Peer ID not found."))
-      return unknownErrorMessage;
+    if (unknownErrorMessage.includes("Peer ID not found.")) return unknownErrorMessage;
 
     return defaultErrorMessage;
   }
 
   private async getAllValidators(): Promise<AllValidatorsResponse> {
     try {
-      const { proxyAgent, browserHeaders } =
-        this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
-      const result = await axios.get<AllValidatorsResponse>(
-        `${API.VALIDATOR_STATS}`,
-        {
-          httpsAgent: proxyAgent,
-          headers: browserHeaders,
-        }
-      );
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const result = await axios.get<AllValidatorsResponse>(`${API.VALIDATOR_STATS}`, {
+        httpsAgent: proxyAgent,
+        headers: browserHeaders,
+      });
 
       this.checkWichIPmadeRequest(proxyAgent);
 
@@ -527,21 +394,19 @@ ${code(
     }
   }
 
-  private getProxyAgentAndBrowserHeaders(
-    referer: string
-  ): ProxyAgentAndBrowserHeaders {
+  private getProxyAgentAndBrowserHeaders(referer: string): ProxyAgentAndBrowserHeaders {
     const proxyAgent = this.proxyHandler.getRandomProxyAgent();
 
     const userAgent = new UserAgent().toString();
     const browserHeaders: RawAxiosRequestHeaders = {
-      Accept: headersProperties.ACCEPT,
+      "Accept": headersProperties.ACCEPT,
       "Accept-Language": headersProperties.ACCEPT_LANGUAGE,
-      Connection: headersProperties.CONNECTION,
-      Referer: referer,
+      "Connection": headersProperties.CONNECTION,
+      "Referer": referer,
       "Sec-Fetch-Dest": headersProperties.SEC_FETCH_DEST,
       "Sec-Fetch-Mode": headersProperties.SEC_FETCH_MODE,
       "Sec-Fetch-Site": headersProperties.SEC_FETCH_SITE,
-      TE: headersProperties.TE,
+      "TE": headersProperties.TE,
       "User-Agent": userAgent,
     };
     return { proxyAgent, browserHeaders };

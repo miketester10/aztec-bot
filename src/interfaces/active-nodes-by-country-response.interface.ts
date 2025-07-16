@@ -1,10 +1,10 @@
 export interface ActiveNodesByCountryResponse {
-  countries: Country[]
+  countries: Country[];
 }
 
 export interface Country {
-  country_name: string
-  country_code: string
-  count: number
-  percentage?: string
+  country_name: string;
+  country_code: string;
+  count: number;
+  percentage?: string;
 }

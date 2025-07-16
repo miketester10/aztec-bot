@@ -1,13 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import { logger } from "../logger/logger";
-import {
-  Bot,
-  code,
-  format,
-  TelegramBotCommand,
-  TelegramUpdate,
-  webhookHandler,
-} from "gramio";
+import { Bot, code, format, TelegramBotCommand, TelegramUpdate, webhookHandler } from "gramio";
 import { Server } from "http";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { Redis } from "ioredis";
@@ -95,18 +88,12 @@ export class ServerHandler {
     });
   }
 
-  private webhookMiddleware(
-    req: Request<{}, {}, TelegramUpdate>,
-    res: Response,
-    next: NextFunction
-  ): void {
+  private webhookMiddleware(req: Request<{}, {}, TelegramUpdate>, res: Response, next: NextFunction): void {
     const tokenFromHeader = req.header("x-telegram-bot-api-secret-token");
     const { message } = req.body;
 
     if (!tokenFromHeader || tokenFromHeader !== this.SECRET_TOKEN) {
-      logger.warn(
-        "Unauthorized webhook request: missing or invalid Secret Token."
-      );
+      logger.warn("Unauthorized webhook request: missing or invalid Secret Token.");
       res.status(401).json({ error: "Unauthorized." });
       return;
     }
@@ -127,11 +114,7 @@ export class ServerHandler {
     next();
   }
 
-  private async rateLimiterMiddleware(
-    req: Request<{}, {}, TelegramUpdate>,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  private async rateLimiterMiddleware(req: Request<{}, {}, TelegramUpdate>, res: Response, next: NextFunction): Promise<void> {
     const { message } = req.body;
     const userID = message?.from?.id!;
     const text = message?.text?.trim();
@@ -153,9 +136,7 @@ export class ServerHandler {
       res.sendStatus(200);
       logger.warn(`Rate limit exceeded for user ${message?.from?.id}`);
 
-      const formattedText = format`${code(
-        "🚫 Please do not abuse this command. Rate limit exceeded. Try again later."
-      )}`;
+      const formattedText = format`${code("🚫 Please do not abuse this command. Rate limit exceeded. Try again later.")}`;
 
       await this.bot.api.sendMessage({
         chat_id: userID,

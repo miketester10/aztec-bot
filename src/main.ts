@@ -1,8 +1,5 @@
 import { Bot } from "gramio";
-import {
-  MyMessageContext,
-  MyCallbackQueryContext,
-} from "./interfaces/custom-context.interface";
+import { MyMessageContext, MyCallbackQueryContext } from "./interfaces/custom-context.interface";
 import { CommandsHandler } from "./handlers/commands-handler";
 import { ServerHandler } from "./handlers/server-handler";
 import { logger } from "./logger/logger";
@@ -69,9 +66,7 @@ const main = async () => {
       },
     });
   } catch (error) {
-    logger.error(
-      `Unknown Error while starting bot or server: ${(error as Error).message}`
-    );
+    logger.error(`Unknown Error while starting bot or server: ${(error as Error).message}`);
   }
 };
 main();

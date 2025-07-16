@@ -1,18 +1,5 @@
-import {
-  blockquote,
-  Bot,
-  code,
-  bold,
-  italic,
-  underline,
-  format,
-  link,
-  TelegramInlineKeyboardButton,
-} from "gramio";
-import {
-  MyMessageContext,
-  MyCallbackQueryContext,
-} from "../interfaces/custom-context.interface";
+import { blockquote, Bot, code, bold, italic, underline, format, link, TelegramInlineKeyboardButton } from "gramio";
+import { MyMessageContext, MyCallbackQueryContext } from "../interfaces/custom-context.interface";
 import { logger } from "../logger/logger";
 import { AztecHandler } from "./aztec-handler";
 import { CallbackRouter } from "../interfaces/callback-router.interface";
@@ -73,13 +60,10 @@ export class CommandsHandler {
     await ctx.sendChatAction("typing");
     try {
       const result = await this.aztecHandler.getNetworkHealth();
-      const message =
-        this.aztecHandler.createFormattedMessageForNetworkHealth(result);
+      const message = this.aztecHandler.createFormattedMessageForNetworkHealth(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(
-        this.aztecHandler.handleError(error)
-      )}`;
+      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
       await ctx.reply(messageError);
     }
   }
@@ -88,13 +72,10 @@ export class CommandsHandler {
     await ctx.sendChatAction("typing");
     try {
       const result = await this.aztecHandler.getActiveNodesByCountry();
-      const message =
-        this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
+      const message = this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(
-        this.aztecHandler.handleError(error)
-      )}`;
+      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
       await ctx.reply(messageError);
     }
   }
@@ -109,22 +90,17 @@ export class CommandsHandler {
     }
     try {
       const result = await this.aztecHandler.getNodeInfo(peerId);
-      const message =
-        this.aztecHandler.createFormattedMessageForNodeInfo(result);
+      const message = this.aztecHandler.createFormattedMessageForNodeInfo(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(
-        this.aztecHandler.handleError(error)
-      )}`;
+      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
       await ctx.reply(messageError);
     }
   }
 
   async handleValidatorCommand(ctx: MyMessageContext): Promise<void> {
     await ctx.sendChatAction("typing");
-    const address = ctx.update?.message?.text
-      ?.split(" ")[1]
-      ?.toLocaleLowerCase();
+    const address = ctx.update?.message?.text?.split(" ")[1]?.toLocaleLowerCase();
     if (!address) {
       const message = format`${code("Please enter a valid wallet address.")}`;
       await ctx.reply(message);
@@ -132,20 +108,15 @@ export class CommandsHandler {
     }
     try {
       const result = await this.aztecHandler.getValidatorStats(address);
-      const message =
-        this.aztecHandler.createFormattedMessageForValidatorStats(result);
+      const message = this.aztecHandler.createFormattedMessageForValidatorStats(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(
-        this.aztecHandler.handleError(error)
-      )}`;
+      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
       await ctx.reply(messageError);
     }
   }
 
-  async handleTop10Command(
-    ctx: MyMessageContext | MyCallbackQueryContext
-  ): Promise<void> {
+  async handleTop10Command(ctx: MyMessageContext | MyCallbackQueryContext): Promise<void> {
     const isCallbackContext = this.isCallbackContext(ctx);
     if (!isCallbackContext) await ctx.sendChatAction("typing");
     const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
@@ -158,8 +129,7 @@ export class CommandsHandler {
     ];
     try {
       const result = await this.aztecHandler.getTop10Validators();
-      const message =
-        this.aztecHandler.createFormattedMessageForTop10Validators(result);
+      const message = this.aztecHandler.createFormattedMessageForTop10Validators(result);
 
       if (isCallbackContext) {
         await ctx.editText(message, {
@@ -176,9 +146,7 @@ export class CommandsHandler {
         },
       });
     } catch (error) {
-      const messageError = format`${code(
-        this.aztecHandler.handleError(error)
-      )}`;
+      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
       if (isCallbackContext) {
         await ctx.editText(messageError);
         return;
@@ -192,13 +160,10 @@ export class CommandsHandler {
     await ctx.sendChatAction("typing");
     try {
       const result = await this.aztecHandler.getCurrentEpochStats(ctx);
-      const message =
-        this.aztecHandler.createFormattedMessageForEpochStats(result);
+      const message = this.aztecHandler.createFormattedMessageForEpochStats(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(
-        this.aztecHandler.handleError(error)
-      )}`;
+      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
       await ctx.reply(messageError);
     }
   }
@@ -220,10 +185,7 @@ ${blockquote(`⚠️ For more information contact the developer:
 @vegeta (Discord)
 @m1keehrmantraut (Telegram)`)}
 
-🌐 ${link("X (Formerly Twitter)", "https://x.com/developervegeta")} | 👨🏻‍💻 ${link(
-      "GitHub",
-      "https://github.com/miketester10/"
-    )}
+🌐 ${link("X (Formerly Twitter)", "https://x.com/developervegeta")} | 👨🏻‍💻 ${link("GitHub", "https://github.com/miketester10/")}
 `;
 
     await ctx.reply(message, {
@@ -276,9 +238,7 @@ ${blockquote(
             message = format`${blockquote(
               format`ℹ️ ${bold("RANKING SCORE CALCULATION")} ℹ️
 
-              ${underline(
-                "Validators are ranked based on a weighted score (0-1) that considers the following metrics:"
-              )}
+              ${underline("Validators are ranked based on a weighted score (0-1) that considers the following metrics:")}
 
               ${italic("- Attestation Success Rate (35%)")}
               ${italic("- Attestation Volume (25%)")}
@@ -317,9 +277,7 @@ ${blockquote(
   }
 
   // If this method returns true, then ctx is of type MyCallbackQueryContext.
-  private isCallbackContext(
-    ctx: MyMessageContext | MyCallbackQueryContext
-  ): ctx is MyCallbackQueryContext {
+  private isCallbackContext(ctx: MyMessageContext | MyCallbackQueryContext): ctx is MyCallbackQueryContext {
     return !("reply" in ctx); // .reply() method is only available in MyMessageContext
   }
 }

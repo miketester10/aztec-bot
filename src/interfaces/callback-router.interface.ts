@@ -4,7 +4,4 @@ export interface CallbackRouter {
   [key: string]: CallbackHandler;
 }
 
-type CallbackHandler = (
-  ctx: MyCallbackQueryContext,
-  payload: string
-) => Promise<void>;
+type CallbackHandler = (ctx: MyCallbackQueryContext, payload: string) => Promise<void>;

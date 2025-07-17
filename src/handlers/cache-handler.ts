@@ -39,9 +39,13 @@ export class CacheHandler {
     return parsedData;
   }
 
-  async set<T>(key: string, value: T): Promise<void> {
-    const serialized = JSON.stringify(value);
-    await this.redis.set(key, serialized);
+  async set<T>(key: string, value: T, ttl?: number): Promise<void> {
+    const serializedData = JSON.stringify(value);
+    if (ttl) {
+      await this.redis.set(key, serializedData, "EX", ttl);
+      return;
+    }
+    await this.redis.set(key, serializedData);
   }
 
   async delete(key: string): Promise<void> {

@@ -20,11 +20,14 @@ import { headersProperties, referer } from "../consts/headers";
 import { ProxyAgentAndBrowserHeaders } from "../types/proxy-agent-and-browser-headers.type";
 import { ServerHandler } from "./server-handler";
 import { MyMessageContext } from "../interfaces/custom-context.interface";
+import { CacheHandler } from "./cache-handler";
+import { cacheKeys } from "../consts/cache-keys";
 
 export class AztecHandler {
   private static _instance: AztecHandler;
   private readonly proxyHandler: ProxyHandler = ProxyHandler.getInstance();
   private readonly serverHandler: ServerHandler = ServerHandler.getInstance();
+  private readonly cacheHandler: CacheHandler = CacheHandler.getInstance();
 
   private constructor() {}
 
@@ -115,9 +118,13 @@ export class AztecHandler {
 
   async getTop10Validators(): Promise<TopValidatorsResponse> {
     try {
+      const cache = await this.cacheHandler.get<TopValidatorsResponse>(cacheKeys.TOP_10_VALIDATORS);
+      if (cache) {
+        logger.info("🛢️ Using cache");
+        return cache;
+      }
+
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
-      // const currentEpoch = (await this.getCurrentEpochStats())
-      //   .currentEpochMetrics.epochNumber;
       const result = await axios.get<TopValidatorsResponse>(`${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=99999`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
@@ -125,6 +132,7 @@ export class AztecHandler {
 
       this.checkWichIPmadeRequest(proxyAgent);
 
+      this.cacheHandler.set<TopValidatorsResponse>(cacheKeys.TOP_10_VALIDATORS, result.data);
       return result.data;
     } catch (error) {
       throw error;

@@ -2,7 +2,9 @@ import { Bot } from "gramio";
 import { MyMessageContext, MyCallbackQueryContext } from "./interfaces/custom-context.interface";
 import { CommandsHandler } from "./handlers/commands-handler";
 import { ServerHandler } from "./handlers/server-handler";
+import { CacheHandler } from "./handlers/cache-handler";
 import { logger } from "./logger/logger";
+import { cacheKeys } from "./consts/cache-keys";
 import { config } from "dotenv";
 
 config();
@@ -11,6 +13,7 @@ const NODE_ENV: string = process.env.NODE_ENV!;
 const BOT_TOKEN: string = process.env.BOT_TOKEN!;
 const serverHandler: ServerHandler = ServerHandler.getInstance();
 const commandsHandler: CommandsHandler = CommandsHandler.getInstance();
+const cacheHandler: CacheHandler = CacheHandler.getInstance();
 
 // Create bot and set commands
 const bot = new Bot(BOT_TOKEN).onStart(async (ctx) => {
@@ -34,6 +37,7 @@ bot.command("validator", async (ctx: MyMessageContext) => {
   await commandsHandler.handleValidatorCommand(ctx);
 });
 bot.command("top10", async (ctx: MyMessageContext) => {
+  await cacheHandler.delete(cacheKeys.TOP_10_VALIDATORS);
   await commandsHandler.handleTop10Command(ctx);
 });
 bot.command("epoch", async (ctx: MyMessageContext) => {

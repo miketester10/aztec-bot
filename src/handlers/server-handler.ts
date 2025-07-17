@@ -19,7 +19,7 @@ export class ServerHandler {
   private readonly cacheHandler: CacheHandler = CacheHandler.getInstance();
   private readonly app: express.Application = express();
   private bot!: Bot;
-  rateLimiter: RateLimiterRedis;
+  readonly rateLimiter: RateLimiterRedis;
 
   private constructor() {
     // Setup Rate limiter for Telegram users

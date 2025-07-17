@@ -247,14 +247,14 @@ export class AztecHandler {
 
     const showRankingAndNetworkInfo = allValidators ? true : false;
     // Sort validators descending by performanceScore
-    const sortedValidatorsDESC = allValidators?.validators.sort((a: Validator, b: Validator) => b.performanceScore - a.performanceScore);
+    const sortedValidatorsDesc = allValidators?.validators.sort((a: Validator, b: Validator) => b.performanceScore - a.performanceScore);
 
     let totalActiveValidators = 0;
     let totalInactiveValidators = 0;
 
     const validatorRank = { rank: -1, emoji: "" };
 
-    sortedValidatorsDESC?.forEach((validator, _index) => {
+    sortedValidatorsDesc?.forEach((validator, _index) => {
       // Find the rank and emoji for the target validator
       if (validator.address === rawData.address) {
         validatorRank.rank = _index + 1;
@@ -277,10 +277,21 @@ export class AztecHandler {
 
     const proposalMissRate = (100 - Number(proposalSuccessRate)).toFixed(1);
 
-    const message = format`${blockquote(format`🔷 ${bold("VALIDATOR DETAILS")} 🔷
+    const statusAndRankingTemplate = showRankingAndNetworkInfo
+      ? format`ℹ️ ${bold("Status:")} ${status} 
+               🏆 ${bold("Ranking:")} ${code(`${validatorRank.rank}${validatorRank.emoji}`)}`
+      : format`ℹ️ ${bold("Status:")} ${status}`;
 
-      ℹ️ ${bold("Status:")} ${status} 
-      ${showRankingAndNetworkInfo ? format`🏆 ${bold("Ranking:")} ${code(`${validatorRank.rank}${validatorRank.emoji}`)} ` : ""}
+    const networkInfoTemplate = showRankingAndNetworkInfo
+      ? format`🌐 ${bold("NETWORK INFO")} 🌐
+      🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
+      🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}`
+      : "";
+
+    const message = format`${blockquote(format`
+      🔷 ${bold("VALIDATOR DETAILS")} 🔷
+
+      ${statusAndRankingTemplate}
 
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
@@ -299,14 +310,8 @@ export class AztecHandler {
       ❌ ${bold("Missed:")} ${code(`${rawData.totalBlocksMissed}`)}
       📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
-
-      ${
-        showRankingAndNetworkInfo
-          ? format`🌐 ${bold("NETWORK INFO")} 🌐
-      🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
-      🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}`
-          : ""
-      } 
+      
+      ${networkInfoTemplate}
 
     `)}`;
 

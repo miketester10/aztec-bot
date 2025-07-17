@@ -137,10 +137,10 @@ export class CommandsHandler {
         reply_markup: { inline_keyboard: inlineKeyboard },
       };
 
-      if (isCallbackContext) {
-        await ctx.editText(message, replyOptions);
-      } else {
+      if (!isCallbackContext) {
         await ctx.reply(message, replyOptions);
+      } else {
+        await ctx.editText(message, replyOptions);
       }
     } catch (error) {
       const errorMessage = format`${code(this.aztecHandler.handleError(error))}`;

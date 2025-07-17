@@ -288,8 +288,7 @@ export class AztecHandler {
       🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}`
       : "";
 
-    const message = format`${blockquote(format`
-      🔷 ${bold("VALIDATOR DETAILS")} 🔷
+    const message = format`${blockquote(format`🔷 ${bold("VALIDATOR DETAILS")} 🔷
 
       ${statusAndRankingTemplate}
 

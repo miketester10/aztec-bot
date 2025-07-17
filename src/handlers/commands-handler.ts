@@ -121,47 +121,35 @@ export class CommandsHandler {
 
   async handleTop10Command(ctx: MyMessageContext | MyCallbackQueryContext): Promise<void> {
     const isCallbackContext = this.isCallbackContext(ctx);
-    
+
     try {
       if (!isCallbackContext) {
         await this.cacheHandler.delete(cacheKeys.TOP_10_VALIDATORS);
         await ctx.sendChatAction("typing");
       }
 
-      const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
-        [
-          {
-            text: "ℹ️ Criteria",
-            callback_data: "info:rank_score_criteria",
-          },
-        ],
-      ];
-
       const result = await this.aztecHandler.getTop10Validators();
       const message = this.aztecHandler.createFormattedMessageForTop10Validators(result);
 
-      if (isCallbackContext) {
-        await ctx.editText(message, {
-          reply_markup: {
-            inline_keyboard: inlineKeyboard,
-          },
-        });
-        return;
-      }
+      const inlineKeyboard: TelegramInlineKeyboardButton[][] = [[{ text: "ℹ️ Criteria", callback_data: "info:rank_score_criteria" }]];
 
-      await ctx.reply(message, {
-        reply_markup: {
-          inline_keyboard: inlineKeyboard,
-        },
-      });
+      const replyOptions = {
+        reply_markup: { inline_keyboard: inlineKeyboard },
+      };
+
+      if (isCallbackContext) {
+        await ctx.editText(message, replyOptions);
+      } else {
+        await ctx.reply(message, replyOptions);
+      }
     } catch (error) {
-      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
-      if (isCallbackContext) {
-        await ctx.editText(messageError);
-        return;
-      }
+      const errorMessage = format`${code(this.aztecHandler.handleError(error))}`;
 
-      await ctx.reply(messageError);
+      if (isCallbackContext) {
+        await ctx.editText(errorMessage);
+      } else {
+        await ctx.reply(errorMessage);
+      }
     }
   }
 
@@ -255,20 +243,15 @@ ${blockquote(
               ${italic("- Proposal Volume (20%)")}`
             )}`;
             // await ctx.answerCallbackQuery({ text: message, show_alert: true });
-            const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
-              [
-                {
-                  text: "🔙 Back",
-                  callback_data: "back:top_10_validators",
-                },
-              ],
-            ];
+            const inlineKeyboard: TelegramInlineKeyboardButton[][] = [[{ text: "🔙 Back", callback_data: "back:top_10_validators" }]];
+
+            const replyOptions = {
+              reply_markup: { inline_keyboard: inlineKeyboard },
+            };
+
             logger.debug(`Editing the message...`);
-            await ctx.editText(message, {
-              reply_markup: {
-                inline_keyboard: inlineKeyboard,
-              },
-            });
+
+            await ctx.editText(message, replyOptions);
             break;
         }
       },

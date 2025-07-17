@@ -6,40 +6,25 @@ import { RateLimiterRedis } from "rate-limiter-flexible";
 import { Redis } from "ioredis";
 import { config } from "dotenv";
 import { roles } from "../consts/roles";
+import { CacheHandler } from "./cache-handler";
 config();
 
 export class ServerHandler {
   readonly SECRET_TOKEN: string = process.env.SECRET_TOKEN!;
   readonly WEBHOOK_URL: string = process.env.WEBHOOK_URL!;
   readonly WEBHOOK_PATH: string = process.env.WEBHOOK_PATH!;
-  private readonly REDIS_HOST: string = process.env.REDIS_HOST!;
-  private readonly REDIS_PASSWORD: string = process.env.REDIS_PASSWORD!;
-  private readonly REDIS_PORT: number = Number(process.env.REDIS_PORT!);
   private readonly EXPRESS_PORT: number = Number(process.env.EXPRESS_PORT!);
 
   private static _instance: ServerHandler;
+  private readonly cacheHandler: CacheHandler = CacheHandler.getInstance();
   private readonly app: express.Application = express();
   private bot!: Bot;
   rateLimiter: RateLimiterRedis;
 
   private constructor() {
-    // Setup Redis client
-    const redisClient = new Redis({
-      host: this.REDIS_HOST,
-      password: this.REDIS_PASSWORD,
-      port: this.REDIS_PORT,
-      enableOfflineQueue: false,
-    })
-      .on("connect", () => {
-        logger.info("✅ Connected to Redis");
-      })
-      .on("error", (err) => {
-        logger.error(`❌ Error connecting to Redis: ${err.message}`);
-      });
-
     // Setup Rate limiter for Telegram users
     this.rateLimiter = new RateLimiterRedis({
-      storeClient: redisClient,
+      storeClient: this.cacheHandler.redis,
       keyPrefix: "rl_user",
       points: 2, // Max 2 requests
       duration: 240, // Per 4 minutes (240 seconds)

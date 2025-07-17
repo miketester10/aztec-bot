@@ -2,12 +2,15 @@ import { blockquote, Bot, code, bold, italic, underline, format, link, TelegramI
 import { MyMessageContext, MyCallbackQueryContext } from "../interfaces/custom-context.interface";
 import { logger } from "../logger/logger";
 import { AztecHandler } from "./aztec-handler";
+import { CacheHandler } from "./cache-handler";
 import { CallbackRouter } from "../interfaces/callback-router.interface";
 import { callbackPayload } from "../consts/callback-payload";
+import { cacheKeys } from "../consts/cache-keys";
 
 export class CommandsHandler {
   private static _instance: CommandsHandler;
   private readonly aztecHandler: AztecHandler = AztecHandler.getInstance();
+  private readonly cacheHandler: CacheHandler = CacheHandler.getInstance();
 
   private constructor() {}
 
@@ -118,16 +121,22 @@ export class CommandsHandler {
 
   async handleTop10Command(ctx: MyMessageContext | MyCallbackQueryContext): Promise<void> {
     const isCallbackContext = this.isCallbackContext(ctx);
-    if (!isCallbackContext) await ctx.sendChatAction("typing");
-    const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
-      [
-        {
-          text: "ℹ️ Criteria",
-          callback_data: "info:rank_score_criteria",
-        },
-      ],
-    ];
+    
     try {
+      if (!isCallbackContext) {
+        await this.cacheHandler.delete(cacheKeys.TOP_10_VALIDATORS);
+        await ctx.sendChatAction("typing");
+      }
+
+      const inlineKeyboard: TelegramInlineKeyboardButton[][] = [
+        [
+          {
+            text: "ℹ️ Criteria",
+            callback_data: "info:rank_score_criteria",
+          },
+        ],
+      ];
+
       const result = await this.aztecHandler.getTop10Validators();
       const message = this.aztecHandler.createFormattedMessageForTop10Validators(result);
 

@@ -1,4 +1,4 @@
-import { blockquote, Bot, code, bold, italic, underline, format, link, TelegramInlineKeyboardButton } from "gramio";
+import { blockquote, Bot, code, bold, italic, underline, format, link, TelegramInlineKeyboardButton, TelegramMessage, FormattableString } from "gramio";
 import { MyMessageContext, MyCallbackQueryContext } from "../interfaces/custom-context.interface";
 import { logger } from "../logger/logger";
 import { AztecHandler } from "./aztec-handler";
@@ -101,21 +101,40 @@ export class CommandsHandler {
     }
   }
 
-  async handleValidatorCommand(ctx: MyMessageContext): Promise<void> {
-    await ctx.sendChatAction("typing");
-    const address = ctx.update?.message?.text?.split(" ")[1]?.toLocaleLowerCase();
-    if (!address) {
-      const message = format`${code("Please enter a valid wallet address.")}`;
-      await ctx.reply(message);
-      return;
-    }
+  async handleValidatorCommand(ctx: MyMessageContext | MyCallbackQueryContext): Promise<void> {
+    const isCallbackContext = this.isCallbackContext(ctx);
+    let address: string | undefined;
+
     try {
+      if (!isCallbackContext) {
+        await ctx.sendChatAction("typing");
+        address = ctx.update?.message?.text?.split(" ")[1]?.toLocaleLowerCase();
+        if (!address) {
+          const message = format`${code("Please enter a valid wallet address.")}`;
+          await ctx.reply(message);
+          return;
+        }
+        await this.cacheHandler.delete(`${cacheKeys.VALIDATOR_STATS}:${address}`);
+      } else {
+        address = (ctx.update?.callback_query?.message as TelegramMessage).reply_to_message?.text?.split(" ")[1]?.toLocaleLowerCase();
+        if (!address) {
+          throw new Error("Impossible to get address from callback message.");
+        }
+      }
+
       const result = await this.aztecHandler.getValidatorStats(address);
       const message = this.aztecHandler.createFormattedMessageForValidatorStats(result);
-      await ctx.reply(message);
+
+      const inlineKeyboard: TelegramInlineKeyboardButton[][] = [[{ text: "ℹ️ Ranking Criteria", callback_data: "info:rank_score_criteria:validator_stats" }]];
+
+      const replyOptions = {
+        reply_markup: { inline_keyboard: inlineKeyboard },
+      };
+
+      await this.replyOrEdit(ctx, message, replyOptions);
     } catch (error) {
-      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
-      await ctx.reply(messageError);
+      const errorMessage = format`${code(this.aztecHandler.handleError(error))}`;
+      await this.replyOrEdit(ctx, errorMessage);
     }
   }
 
@@ -131,25 +150,16 @@ export class CommandsHandler {
       const result = await this.aztecHandler.getTop10Validators();
       const message = this.aztecHandler.createFormattedMessageForTop10Validators(result);
 
-      const inlineKeyboard: TelegramInlineKeyboardButton[][] = [[{ text: "ℹ️ Criteria", callback_data: "info:rank_score_criteria" }]];
+      const inlineKeyboard: TelegramInlineKeyboardButton[][] = [[{ text: "ℹ️ Ranking Criteria", callback_data: "info:rank_score_criteria:top_10_validators" }]];
 
       const replyOptions = {
         reply_markup: { inline_keyboard: inlineKeyboard },
       };
 
-      if (!isCallbackContext) {
-        await ctx.reply(message, replyOptions);
-      } else {
-        await ctx.editText(message, replyOptions);
-      }
+      await this.replyOrEdit(ctx, message, replyOptions);
     } catch (error) {
       const errorMessage = format`${code(this.aztecHandler.handleError(error))}`;
-
-      if (isCallbackContext) {
-        await ctx.editText(errorMessage);
-      } else {
-        await ctx.reply(errorMessage);
-      }
+      await this.replyOrEdit(ctx, errorMessage);
     }
   }
 
@@ -242,8 +252,9 @@ ${blockquote(
               ${italic("- Proposal Success Rate (20%)")}
               ${italic("- Proposal Volume (20%)")}`
             )}`;
-            // await ctx.answerCallbackQuery({ text: message, show_alert: true });
-            const inlineKeyboard: TelegramInlineKeyboardButton[][] = [[{ text: "🔙 Back", callback_data: "back:top_10_validators" }]];
+
+            const backTarget = ctx.update?.callback_query?.data?.split(":")[2];
+            const inlineKeyboard: TelegramInlineKeyboardButton[][] = [[{ text: "🔙 Back", callback_data: `back:${backTarget}` }]];
 
             const replyOptions = {
               reply_markup: { inline_keyboard: inlineKeyboard },
@@ -261,11 +272,23 @@ ${blockquote(
             logger.debug(`Editing the message...`);
             await this.handleTop10Command(ctx);
             break;
+          case callbackPayload.VALIDATOR_STATS:
+            logger.debug(`Editing the message...`);
+            await this.handleValidatorCommand(ctx);
+            break;
         }
       },
     };
 
     return callbackRouter;
+  }
+
+  private async replyOrEdit(ctx: MyMessageContext | MyCallbackQueryContext, text: FormattableString, options?: Object): Promise<void> {
+    if (this.isCallbackContext(ctx)) {
+      await ctx.editText(text, options);
+    } else {
+      await ctx.reply(text, options);
+    }
   }
 
   // If this method returns true, then ctx is of type MyCallbackQueryContext.

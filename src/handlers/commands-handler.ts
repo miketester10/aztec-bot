@@ -118,7 +118,7 @@ export class CommandsHandler {
       } else {
         address = (ctx.update?.callback_query?.message as TelegramMessage).reply_to_message?.text?.split(" ")[1]?.toLocaleLowerCase();
         if (!address) {
-          throw new Error("Impossible to get address from callback message.");
+          throw new Error("Impossible to get address from callback query.");
         }
       }
 

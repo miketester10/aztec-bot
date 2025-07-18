@@ -1,4 +1,4 @@
-import { blockquote, Bot, code, bold, italic, underline, format, link, TelegramInlineKeyboardButton, TelegramMessage, FormattableString } from "gramio";
+import { blockquote, Bot, code, bold, italic, underline, format, link, TelegramInlineKeyboardButton, TelegramMessage, FormattableString, TelegramError } from "gramio";
 import { MyMessageContext, MyCallbackQueryContext } from "../interfaces/custom-context.interface";
 import { logger } from "../logger/logger";
 import { AztecHandler } from "./aztec-handler";
@@ -66,8 +66,7 @@ export class CommandsHandler {
       const message = this.aztecHandler.createFormattedMessageForNetworkHealth(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
-      await ctx.reply(messageError);
+      await this.handleError(error, ctx);
     }
   }
 
@@ -78,8 +77,7 @@ export class CommandsHandler {
       const message = this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
-      await ctx.reply(messageError);
+      await this.handleError(error, ctx);
     }
   }
 
@@ -96,8 +94,7 @@ export class CommandsHandler {
       const message = this.aztecHandler.createFormattedMessageForNodeInfo(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
-      await ctx.reply(messageError);
+      await this.handleError(error, ctx);
     }
   }
 
@@ -133,8 +130,7 @@ export class CommandsHandler {
 
       await this.replyOrEdit(ctx, message, replyOptions);
     } catch (error) {
-      const errorMessage = format`${code(this.aztecHandler.handleError(error))}`;
-      await this.replyOrEdit(ctx, errorMessage);
+      await this.handleError(error, ctx);
     }
   }
 
@@ -158,8 +154,7 @@ export class CommandsHandler {
 
       await this.replyOrEdit(ctx, message, replyOptions);
     } catch (error) {
-      const errorMessage = format`${code(this.aztecHandler.handleError(error))}`;
-      await this.replyOrEdit(ctx, errorMessage);
+      await this.handleError(error, ctx);
     }
   }
 
@@ -170,8 +165,7 @@ export class CommandsHandler {
       const message = this.aztecHandler.createFormattedMessageForEpochStats(result);
       await ctx.reply(message);
     } catch (error) {
-      const messageError = format`${code(this.aztecHandler.handleError(error))}`;
-      await ctx.reply(messageError);
+      await this.handleError(error, ctx);
     }
   }
 
@@ -278,6 +272,7 @@ ${blockquote(
             logger.debug(`Editing the message...`);
             await this.handleTop10Command(ctx);
             break;
+
           case callbackPayload.VALIDATOR_STATS:
             logger.debug(`Editing the message...`);
             await this.handleValidatorCommand(ctx);
@@ -293,7 +288,7 @@ ${blockquote(
     if (this.isCallbackContext(ctx)) {
       await ctx.editText(text, options).then(() => {
         logger.debug("Message edited successfully.");
-      })
+      });
     } else {
       await ctx.reply(text, options);
     }
@@ -302,5 +297,20 @@ ${blockquote(
   // If this method returns true, then ctx is of type MyCallbackQueryContext.
   private isCallbackContext(ctx: MyMessageContext | MyCallbackQueryContext): ctx is MyCallbackQueryContext {
     return !("reply" in ctx); // .reply() method is only available in MyMessageContext
+  }
+
+  private async handleError(error: unknown, ctx: MyMessageContext | MyCallbackQueryContext): Promise<void> {
+    if (error instanceof TelegramError && error.message.includes("message is not modified")) {
+      logger.error(`Telegram Error: ${error.message}`);
+      return;
+    }
+
+    try {
+      const errorMessage = format`${code(this.aztecHandler.handleError(error))}`;
+      await this.replyOrEdit(ctx, errorMessage);
+    } catch (e) {
+      // Fallback if also replyOrEdit() fails
+      logger.error(`Failed to send error message: ${(e as Error).message}`);
+    }
   }
 }

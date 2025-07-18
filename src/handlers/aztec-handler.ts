@@ -123,7 +123,7 @@ export class AztecHandler {
         allValidators,
       };
 
-      this.cacheHandler.set<ValidatorStatsCombinedResponse>(key, response);
+      await this.cacheHandler.set<ValidatorStatsCombinedResponse>(key, response);
       return { validatorStats: result.data, allValidators };
     } catch (error) {
       throw error;
@@ -148,7 +148,7 @@ export class AztecHandler {
 
       this.checkWichIPmadeRequest(proxyAgent);
 
-      this.cacheHandler.set<TopValidatorsResponse>(key, result.data);
+      await this.cacheHandler.set<TopValidatorsResponse>(key, result.data);
       return result.data;
     } catch (error) {
       throw error;
@@ -404,26 +404,6 @@ ${code(
     return message;
   }
 
-  handleError(error: unknown): string {
-    const defaultErrorMessage = "An error occurred. Please try again later.";
-
-    if (axios.isAxiosError(error)) {
-      const customErrorMessage = (error as AxiosError<ErrorResponse>).response?.data.error;
-      const errorMessage = customErrorMessage ? customErrorMessage : error.message;
-      logger.error(`Axios Error: ${errorMessage}`);
-
-      if (customErrorMessage?.includes("Validator not found.")) return customErrorMessage;
-
-      return defaultErrorMessage;
-    }
-    const unknownErrorMessage = (error as Error).message;
-    logger.error(`Unknown Error: ${unknownErrorMessage}`);
-
-    if (unknownErrorMessage.includes("Peer ID not found.")) return unknownErrorMessage;
-
-    return defaultErrorMessage;
-  }
-
   private async getAllValidators(): Promise<AllValidatorsResponse> {
     try {
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
@@ -463,5 +443,25 @@ ${code(
   private checkWichIPmadeRequest(proxyAgent: HttpsProxyAgent<string>): void {
     const usedIP = proxyAgent.connectOpts.host;
     if (usedIP) logger.debug(`Request made with IP: ${usedIP}`);
+  }
+
+  handleError(error: unknown): string {
+    const defaultErrorMessage = "An error occurred. Please try again later.";
+
+    if (axios.isAxiosError(error)) {
+      const customErrorMessage = (error as AxiosError<ErrorResponse>).response?.data.error;
+      const errorMessage = customErrorMessage ? customErrorMessage : error.message;
+      logger.error(`Axios Error: ${errorMessage}`);
+
+      if (customErrorMessage?.includes("Validator not found.")) return customErrorMessage;
+
+      return defaultErrorMessage;
+    }
+    const unknownErrorMessage = (error as Error).message;
+    logger.error(`Unknown Error: ${unknownErrorMessage}`);
+
+    if (unknownErrorMessage.includes("Peer ID not found.")) return unknownErrorMessage;
+
+    return defaultErrorMessage;
   }
 }

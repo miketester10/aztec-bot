@@ -230,7 +230,10 @@ ${blockquote(
 
     if (actionHandler) {
       await actionHandler(ctx, payload);
-      logger.debug(`Action [${action}] executed with payload: [${payload}]`);
+      const debugMessage = `Action [${action}] executed with payload: [${payload}]`;
+      logger.debug(debugMessage);
+      logger.debug("-".repeat(debugMessage.length));
+      logger.debug("-".repeat(debugMessage.length));
       return;
     }
     logger.error(`No actionHandler found for: ${action}`);
@@ -262,7 +265,10 @@ ${blockquote(
 
             logger.debug(`Editing the message...`);
 
-            await ctx.editText(message, replyOptions);
+            await ctx.editText(message, replyOptions).then(() => {
+              logger.debug("Message edited successfully.");
+            });
+
             break;
         }
       },
@@ -285,7 +291,9 @@ ${blockquote(
 
   private async replyOrEdit(ctx: MyMessageContext | MyCallbackQueryContext, text: FormattableString, options?: Object): Promise<void> {
     if (this.isCallbackContext(ctx)) {
-      await ctx.editText(text, options);
+      await ctx.editText(text, options).then(() => {
+        logger.debug("Message edited successfully.");
+      })
     } else {
       await ctx.reply(text, options);
     }

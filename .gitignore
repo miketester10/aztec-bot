@@ -32,5 +32,4 @@ dist-ssr
 *.sln
 *.sw?
 
-docker-compose.yml
 

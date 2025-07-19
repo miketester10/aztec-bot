@@ -1,0 +1,19 @@
+services:
+  Redis:
+    image: redis:alpine
+    container_name: Redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    env_file:
+      - .env # file locale nella cartella corrente redis
+    environment:
+      - TZ=Europe/Rome # Imposta la variabile TimeZone per avere l'orario italiano nei logs
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    restart: unless-stopped
+    mem_limit: 250m
+    memswap_limit: 250m    
+
+volumes:
+  redis-data:

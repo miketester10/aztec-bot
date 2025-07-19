@@ -231,6 +231,9 @@ ${blockquote(
       logger.error(`No actionHandler found for: ${action}`);
     }
     logger.debug("*".repeat(80));
+
+    // Stop animation of the button
+    await ctx.answerCallbackQuery();
   }
 
   private callbackRouter(): CallbackRouter {

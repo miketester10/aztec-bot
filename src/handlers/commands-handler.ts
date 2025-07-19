@@ -216,21 +216,21 @@ ${blockquote(
 
   async handleCallbackCommand(ctx: MyCallbackQueryContext): Promise<void> {
     const data = ctx.update?.callback_query?.data;
-    logger.warn(`Callback received with data: ${data}`);
     const [action, payload] = data?.split(":") || [];
+
+    logger.debug("*".repeat(80));
+    logger.warn(`Callback received with data: ${data}`);
 
     const callbackRouter = this.callbackRouter();
     const actionHandler = callbackRouter[action];
 
     if (actionHandler) {
       await actionHandler(ctx, payload);
-      const debugMessage = `Action [${action}] executed with payload: [${payload}]`;
-      logger.debug(debugMessage);
-      logger.debug("-".repeat(debugMessage.length));
-      logger.debug("-".repeat(debugMessage.length));
-      return;
+      logger.debug(`Action [${action}] executed with payload: [${payload}]`);
+    } else {
+      logger.error(`No actionHandler found for: ${action}`);
     }
-    logger.error(`No actionHandler found for: ${action}`);
+    logger.debug("*".repeat(80));
   }
 
   private callbackRouter(): CallbackRouter {

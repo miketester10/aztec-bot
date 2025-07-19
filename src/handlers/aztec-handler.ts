@@ -2,14 +2,15 @@ import axios, { AxiosError, RawAxiosRequestHeaders } from "axios";
 import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
 import { ValidatorStatsCombinedResponse } from "../types/validator-stats-combined-response.type";
 import { AllValidatorsResponse, Validator } from "../interfaces/all-validators-response.interface";
+import { AllValidatorsByAztecResponse, Validator as ValidatorByAztec } from "../interfaces/all-validators-by-aztec-response.interface";
 import { TopValidatorsResponse, TopValidator } from "../interfaces/top-validators-response.interface";
 import { CurrentEpochStatsResponse } from "../interfaces/current-epoch-stats-response.interface";
 import { ErrorResponse } from "../interfaces/error-response.interface";
 import { API } from "../consts/api";
 import { logger } from "../logger/logger";
 import { blockquote, bold, code, format, FormattableString, italic } from "gramio";
-import { validatorStatus, validatorStatusMessage } from "../consts/validator-status";
-import { NetworkHealthResponse } from "../interfaces/network-health-response.interface";
+import { validatorStatus, validatorStatusByAztec, validatorStatusMessage } from "../consts/validator-status";
+import { Block, NetworkHealthResponse } from "../interfaces/network-health-response.interface";
 import { ActiveNodesByCountryResponse, Country } from "../interfaces/active-nodes-by-country-response.interface";
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
 import { HttpsProxyAgent } from "https-proxy-agent";
@@ -40,11 +41,11 @@ export class AztecHandler {
 
   async getNetworkHealth(): Promise<NetworkHealthResponse> {
     try {
-      const result = await axios.get<NetworkHealthResponse>(API.NETWORK_HEALTH);
+      const [{ data: blocks }, { data: validators }] = await Promise.all([axios.get<Block[]>(API.NETWORK_HEALTH), axios.get<AllValidatorsByAztecResponse>(API.VALIDATORS_STATS_BY_AZTEC)]);
 
-      logger.info(`Pending Block: ${result.data[4].height}, Proven Block: ${result.data[1].height}, Current Slot: ${result.data[4].header.globalVariables.slotNumber}`);
+      logger.info(`Pending Block: ${blocks[4].height}, Proven Block: ${blocks[1].height}, Current Slot: ${blocks[4].header.globalVariables.slotNumber}`);
 
-      return result.data;
+      return { blocks, validators };
     } catch (error) {
       throw error;
     }
@@ -101,7 +102,7 @@ export class AztecHandler {
       }
 
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
-      const result = await axios.get<ValidatorStatsResponse>(`${API.VALIDATOR_STATS}/${validatorAddress}`, {
+      const result = await axios.get<ValidatorStatsResponse>(`${API.VALIDATORS_STATS}/${validatorAddress}`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
       });
@@ -181,15 +182,29 @@ export class AztecHandler {
   }
 
   createFormattedMessageForNetworkHealth(rawData: NetworkHealthResponse): FormattableString {
+    const { blocks, validators } = rawData;
+
+    let totalActiveValidators = 0;
+    let totalInactiveValidators = 0;
+
+    validators.forEach((validator: ValidatorByAztec) => {
+      if (validator.status === validatorStatusByAztec.ACTIVE) {
+        totalActiveValidators++;
+      } else if (validator.status === validatorStatusByAztec.EXITED) {
+        totalInactiveValidators++;
+      }
+    });
+
     const message = format`${blockquote(
       format`🔷 ${bold("NETWORK HEALTH")} 🔷
 
-      🏗️ ${bold("Pending Block:")} ${code(rawData[4].height)} 
-      🧱 ${bold("Proven Block:")} ${code(rawData[1].height)} 
-      🎰 ${bold("Current Slot:")} ${code(rawData[4].header.globalVariables.slotNumber)}
-      
-      
-      `
+      🏗️ ${bold("Pending Block:")} ${code(blocks[4].height)} 
+      🧱 ${bold("Proven Block:")} ${code(blocks[1].height)} 
+      🎰 ${bold("Current Slot:")} ${code(blocks[4].header.globalVariables.slotNumber)}
+
+      🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
+      🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}
+        `
     )}`;
 
     return message;
@@ -407,7 +422,7 @@ ${code(
   private async getAllValidators(): Promise<AllValidatorsResponse> {
     try {
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
-      const result = await axios.get<AllValidatorsResponse>(`${API.VALIDATOR_STATS}`, {
+      const result = await axios.get<AllValidatorsResponse>(`${API.VALIDATORS_STATS}`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
       });

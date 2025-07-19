@@ -1,4 +1,9 @@
-export type NetworkHealthResponse = Block[];
+import { AllValidatorsByAztecResponse } from "./all-validators-by-aztec-response.interface";
+
+export interface NetworkHealthResponse {
+  blocks: Block[];
+  validators: AllValidatorsByAztecResponse;
+}
 
 export interface Block {
   hash: string;

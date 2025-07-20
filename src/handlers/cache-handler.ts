@@ -1,7 +1,13 @@
 import { Redis } from "ioredis";
+import { addSeconds, isAfter, getUnixTime } from "date-fns";
 import { logger } from "../logger/logger";
 import { config } from "dotenv";
 config();
+
+type SetOptions = {
+  ttl?: number;
+  smart?: boolean;
+};
 
 export class CacheHandler {
   private readonly REDIS_HOST: string = process.env.REDIS_HOST!;
@@ -39,10 +45,46 @@ export class CacheHandler {
     return parsedData;
   }
 
-  // TTL in seconds (default 6 hours)
-  async set<T>(key: string, value: T, ttl: number = 21600): Promise<void> {
+  /**
+   * Stores a key-value pair in Redis with optional smart TTL logic.
+   *
+   * Validators quota resets at 21:45 UTC, so this method:
+   * - If `options.smart` is false or omitted, sets a normal TTL (default 6 hours).
+   * - If `options.smart` is true, limits expiration to today at 21:40 UTC if TTL exceeds that.
+   *
+   * @param key Redis key to set
+   * @param value Value to store (will be JSON serialized)
+   * @param options Optional settings:
+   *   - `ttl` Time-to-live in seconds (default 21600 = 6 hours)
+   *   - `smart` If true, forces expiration to max 21:40 UTC today
+   */
+  async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
+    const ttl = options?.ttl ?? 21600;
+    const smart = options?.smart ?? false;
+
     const serializedData = JSON.stringify(value);
+    const now = new Date();
+
+    if (smart) {
+      // Calculate the "normal" expiration time by adding ttl seconds to now
+      const expireAt = addSeconds(now, ttl);
+
+      // Define the forced expiration time at 21:40 UTC today
+      const todayAt2140UTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 21, 40, 0));
+
+      // If the "normal" expiration time is after 21:40 UTC, force expiration to 21:40 UTC
+      if (isAfter(expireAt, todayAt2140UTC)) {
+        const unixExpire = getUnixTime(todayAt2140UTC); // Convert to Unix timestamp in seconds
+        await this.redis.set(key, serializedData);
+        await this.redis.expireat(key, unixExpire); // Force expiration at 21:40 UTC
+        logger.info(`[Redis:set] Key "${key}" set with smart TTL, expiring at 21:40 UTC (Validators quota reset)`);
+        return;
+      }
+    }
+
+    // If not smart or TTL is before the forced expiration, set with normal TTL
     await this.redis.set(key, serializedData, "EX", ttl);
+    logger.info(`[Redis:set] Key "${key}" set with standard TTL: ${ttl} seconds`);
   }
 
   async delete(key: string): Promise<void> {

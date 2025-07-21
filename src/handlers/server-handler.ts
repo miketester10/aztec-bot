@@ -1,9 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import { logger } from "../logger/logger";
-import { Bot, code, format, TelegramBotCommand, TelegramUpdate, webhookHandler } from "gramio";
+import { Bot, code, format, TelegramUpdate, webhookHandler } from "gramio";
 import { Server } from "http";
 import { RateLimiterRedis } from "rate-limiter-flexible";
-import { Redis } from "ioredis";
 import { config } from "dotenv";
 import { roles } from "../consts/roles";
 import { CacheHandler } from "./cache-handler";

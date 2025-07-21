@@ -33,4 +33,5 @@ dist-ssr
 *.sw?
 
 check_proxies.sh
+proxies.json
 

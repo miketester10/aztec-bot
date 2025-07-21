@@ -2,7 +2,6 @@ import axios, { AxiosError, RawAxiosRequestHeaders } from "axios";
 import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
 import { ValidatorStatsCombinedResponse } from "../types/validator-stats-combined-response.type";
 import { AllValidatorsResponse, Validator } from "../interfaces/all-validators-response.interface";
-import { AllValidatorsByAztecResponse, Validator as ValidatorByAztec } from "../interfaces/all-validators-by-aztec-response.interface";
 import { TopValidatorsResponse, TopValidator } from "../interfaces/top-validators-response.interface";
 import { CurrentEpochStatsResponse } from "../interfaces/current-epoch-stats-response.interface";
 import { ErrorResponse } from "../interfaces/error-response.interface";
@@ -41,7 +40,7 @@ export class AztecHandler {
 
   async getNetworkHealth(): Promise<NetworkHealthResponse> {
     try {
-      const [{ data: blocks }, { data: validators }] = await Promise.all([axios.get<Block[]>(API.NETWORK_HEALTH), axios.get<AllValidatorsByAztecResponse>(API.VALIDATORS_STATS_BY_AZTEC)]);
+      const [{ data: blocks }, { validators }] = await Promise.all([axios.get<Block[]>(API.NETWORK_HEALTH), this.getAllValidators()]);
 
       logger.info(`Pending Block: ${blocks[4].height}, Proven Block: ${blocks[1].height}, Current Slot: ${blocks[4].header.globalVariables.slotNumber}`);
 
@@ -181,10 +180,11 @@ export class AztecHandler {
     let totalActiveValidators = 0;
     let totalInactiveValidators = 0;
 
-    validators.forEach((validator: ValidatorByAztec) => {
-      if (validator.status === validatorStatusByAztec.ACTIVE) {
+    validators.forEach((validator: Validator) => {
+      // Count active and inactive validators
+      if (validator.status === validatorStatus.ACTIVE) {
         totalActiveValidators++;
-      } else if (validator.status === validatorStatusByAztec.EXITED) {
+      } else if (validator.status === validatorStatus.EXITED) {
         totalInactiveValidators++;
       }
     });
@@ -430,7 +430,7 @@ ${code(
 
       logger.info(`Total validators: ${result.data.validators.length}`);
 
-      await this.cacheHandler.set<AllValidatorsResponse>(key, result.data, { smart: true });
+      await this.cacheHandler.set<AllValidatorsResponse>(key, result.data, { ttl: 14400, smart: true });
       return result.data;
     } catch (error) {
       throw error;

@@ -1,8 +1,8 @@
-import { AllValidatorsByAztecResponse } from "./all-validators-by-aztec-response.interface";
+import { Validator } from "./all-validators-response.interface";
 
 export interface NetworkHealthResponse {
   blocks: Block[];
-  validators: AllValidatorsByAztecResponse;
+  validators: Validator[];
 }
 
 export interface Block {

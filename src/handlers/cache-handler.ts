@@ -87,14 +87,13 @@ export class CacheHandler {
         // If normal expiration would go beyond 21:40 UTC, cap it at 21:40 UTC
         if (isAfter(expireAt, todayAt2140UTC)) {
           const unixExpire = getUnixTime(todayAt2140UTC); // Convert to Unix timestamp in seconds
-          await this.redis.set(key, serializedData);
-          await this.redis.expireat(key, unixExpire); // Force expiration at 21:40 UTC
+          await this.redis.set(key, serializedData, "EXAT", unixExpire); // Force expiration at 21:40 UTC
           logger.warn(`[Redis:SET] Key "${key}" set with smart TTL, expiring at 21:40 UTC (Validators quota reset)`);
           return;
         }
       }
 
-      // (now >= 21:50 UTC) From 21:50 UTC onward: allow standard TTL to be set
+      // (now >= 21:50 UTC) From 21:50 UTC: allow standard TTL to be set
     }
 
     // Standard TTL behavior (either smart: false or no special time handling needed)

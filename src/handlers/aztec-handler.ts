@@ -96,10 +96,7 @@ export class AztecHandler {
 
     try {
       const cache = await this.cacheHandler.get<ValidatorStatsCombinedResponse>(key);
-      if (cache) {
-        logger.info("🛢️ Using cache");
-        return cache;
-      }
+      if (cache) return cache;
 
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
       const result = await axios.get<ValidatorStatsResponse>(`${API.VALIDATORS_STATS}/${validatorAddress}`, {
@@ -136,10 +133,7 @@ export class AztecHandler {
 
     try {
       const cache = await this.cacheHandler.get<TopValidatorsResponse>(key);
-      if (cache) {
-        logger.info("🛢️ Using cache");
-        return cache;
-      }
+      if (cache) return cache;
 
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
       const result = await axios.get<TopValidatorsResponse>(`${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=99999`, {
@@ -420,7 +414,12 @@ ${code(
   }
 
   private async getAllValidators(): Promise<AllValidatorsResponse> {
+    const key = `${cacheKeys.ALL_VALIDATORS}`;
+
     try {
+      const cache = await this.cacheHandler.get<AllValidatorsResponse>(key);
+      if (cache) return cache;
+
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
       const result = await axios.get<AllValidatorsResponse>(`${API.VALIDATORS_STATS}`, {
         httpsAgent: proxyAgent,
@@ -431,6 +430,7 @@ ${code(
 
       logger.info(`Total validators: ${result.data.validators.length}`);
 
+      await this.cacheHandler.set<AllValidatorsResponse>(key, result.data, { smart: true });
       return result.data;
     } catch (error) {
       throw error;

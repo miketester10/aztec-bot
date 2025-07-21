@@ -42,6 +42,7 @@ export class CacheHandler {
   async get<T>(key: string): Promise<T | null> {
     const data = await this.redis.get(key);
     const parsedData = data ? (JSON.parse(data) as T) : null;
+    if (parsedData) logger.warn(`[Redis:GET] Key "${key}" fetched`);
     return parsedData;
   }
 
@@ -50,13 +51,16 @@ export class CacheHandler {
    *
    * Validators quota resets at 21:45 UTC, so this method:
    * - If `options.smart` is false or omitted, sets a normal TTL (default 6 hours).
-   * - If `options.smart` is true, limits expiration to today at 21:40 UTC if TTL exceeds that.
+   * - If `options.smart` is true:
+   *    - Between 00:00 and 21:39 UTC: limits expiration to max 21:40 UTC today.
+   *    - Between 21:40 and 21:49 UTC: skips setting the cache entirely (to avoid stale data).
+   *    - From 21:50 UTC onward: sets TTL normally.
    *
    * @param key Redis key to set
    * @param value Value to store (will be JSON serialized)
    * @param options Optional settings:
    *   - `ttl` Time-to-live in seconds (default 21600 = 6 hours)
-   *   - `smart` If true, forces expiration to max 21:40 UTC today
+   *   - `smart` If true, enables special cache timing around quota reset
    */
   async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
     const ttl = options?.ttl ?? 21600;
@@ -66,33 +70,46 @@ export class CacheHandler {
     const now = new Date();
 
     if (smart) {
-      // Calculate the "normal" expiration time by adding ttl seconds to now
-      const expireAt = addSeconds(now, ttl);
-
-      // Define the forced expiration time at 21:40 UTC today
+      // Define the window in UTC for special logic: 21:40 - 21:50 UTC
       const todayAt2140UTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 21, 40, 0));
+      const todayAt2150UTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 21, 50, 0));
 
-      // If the "normal" expiration time is after 21:40 UTC, force expiration to 21:40 UTC
-      if (isAfter(expireAt, todayAt2140UTC)) {
-        const unixExpire = getUnixTime(todayAt2140UTC); // Convert to Unix timestamp in seconds
-        await this.redis.set(key, serializedData);
-        await this.redis.expireat(key, unixExpire); // Force expiration at 21:40 UTC
-        logger.info(`[Redis:set] Key "${key}" set with smart TTL, expiring at 21:40 UTC (Validators quota reset)`);
+      if (now >= todayAt2140UTC && now < todayAt2150UTC) {
+        // Between 21:40 and 21:50 UTC: skip caching to avoid stale data from API
+        logger.warn(`[Redis:SET] Key "${key}" NOT cached due to smart TTL window (21:40–21:50 UTC — live update window)`);
         return;
       }
+
+      if (now < todayAt2140UTC) {
+        // Calculate when the key would normally expire
+        const expireAt = addSeconds(now, ttl);
+
+        // If normal expiration would go beyond 21:40 UTC, cap it at 21:40 UTC
+        if (isAfter(expireAt, todayAt2140UTC)) {
+          const unixExpire = getUnixTime(todayAt2140UTC); // Convert to Unix timestamp in seconds
+          await this.redis.set(key, serializedData);
+          await this.redis.expireat(key, unixExpire); // Force expiration at 21:40 UTC
+          logger.warn(`[Redis:SET] Key "${key}" set with smart TTL, expiring at 21:40 UTC (Validators quota reset)`);
+          return;
+        }
+      }
+
+      // (now >= 21:50 UTC) From 21:50 UTC onward: allow standard TTL to be set
     }
 
-    // If not smart or TTL is before the forced expiration, set with normal TTL
+    // Standard TTL behavior (either smart: false or no special time handling needed)
     await this.redis.set(key, serializedData, "EX", ttl);
-    logger.info(`[Redis:set] Key "${key}" set with standard TTL: ${ttl} seconds`);
+    logger.warn(`[Redis:SET] Key "${key}" set with standard TTL: ${ttl} seconds`);
   }
 
   async delete(key: string): Promise<void> {
     await this.redis.del(key);
+    logger.warn(`[Redis:DELETE] Key "${key}" deleted`);
   }
 
   async has(key: string): Promise<boolean> {
     const exists = await this.redis.exists(key);
+    logger.warn(`[Redis:HAS] Key "${key}" exists: ${exists === 1}`);
     return exists === 1;
   }
 }

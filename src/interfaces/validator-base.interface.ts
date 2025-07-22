@@ -10,5 +10,10 @@ export interface ValidatorBase {
   totalBlocksMined: number;
   totalBlocksMissed: number;
   x_handle?: string;
+  x_user_id?: string;
+  x_image_url?: string;
   name?: string;
+  discordUsername?: string;
+  discordAvatar?: string;
+  discordId?: string;
 }

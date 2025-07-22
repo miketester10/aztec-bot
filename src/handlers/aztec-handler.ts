@@ -24,6 +24,8 @@ import { CacheHandler } from "./cache-handler";
 import { cacheKeys } from "../consts/cache-keys";
 
 export class AztecHandler {
+  private readonly PROXY_MODE: string = process.env.PROXY_MODE!;
+
   private static _instance: AztecHandler;
   private readonly proxyHandler: ProxyHandler = ProxyHandler.getInstance();
   private readonly serverHandler: ServerHandler = ServerHandler.getInstance();
@@ -58,7 +60,7 @@ export class AztecHandler {
         headers: browserHeaders,
       });
 
-      this.checkWichIPmadeRequest(proxyAgent);
+      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
       const activeNodes = result.data.countries.reduce((acc: number, country: Country) => acc + country.count, 0);
       logger.info(`Active nodes: ${activeNodes}`);
@@ -77,7 +79,7 @@ export class AztecHandler {
         headers: browserHeaders,
       });
 
-      this.checkWichIPmadeRequest(proxyAgent);
+      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
       if (!result.data.peers) {
         throw new Error("Peer ID not found.");
@@ -103,7 +105,7 @@ export class AztecHandler {
         headers: browserHeaders,
       });
 
-      this.checkWichIPmadeRequest(proxyAgent);
+      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
       logger.info(`Validator status: ${result.data.status}`);
 
@@ -140,7 +142,7 @@ export class AztecHandler {
         headers: browserHeaders,
       });
 
-      this.checkWichIPmadeRequest(proxyAgent);
+      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
       await this.cacheHandler.set<TopValidatorsResponse>(key, result.data);
       return result.data;
@@ -157,7 +159,7 @@ export class AztecHandler {
         headers: browserHeaders,
       });
 
-      this.checkWichIPmadeRequest(proxyAgent);
+      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
       if (result.data.totalActiveValidators.toString().includes("Stolen Data") || result.data.currentEpochMetrics.epochNumber === 9999) {
         throw new Error("IP banned by DASHTEC API");
@@ -421,7 +423,7 @@ ${code(
         headers: browserHeaders,
       });
 
-      this.checkWichIPmadeRequest(proxyAgent);
+      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
       logger.info(`Total validators: ${result.data.validators.length}`);
 
@@ -433,7 +435,10 @@ ${code(
   }
 
   private getProxyAgentAndBrowserHeaders(referer: string): ProxyAgentAndBrowserHeaders {
-    const proxyAgent = this.proxyHandler.getRandomProxyAgent();
+    let proxyAgent: HttpsProxyAgent<string> | undefined;
+    if (this.PROXY_MODE === "active") {
+      proxyAgent = this.proxyHandler.getRandomProxyAgent();
+    }
 
     const userAgent = new UserAgent().toString();
     const browserHeaders: RawAxiosRequestHeaders = {

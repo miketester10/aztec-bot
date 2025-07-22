@@ -1,5 +1,5 @@
 export const validatorStatus = {
-  ACTIVE: "Active",
+  ACTIVE: "Validating",
   EXITED: "Exited",
 };
 

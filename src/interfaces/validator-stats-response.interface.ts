@@ -1,7 +1,6 @@
 import { ValidatorBase } from "./validator-base.interface";
 
 export interface ValidatorStatsResponse extends ValidatorBase {
-  proposerAddress: string;
   withdrawalCredentials: string;
   recentAttestations: RecentAttestation[];
   proposalHistory: ProposalHistory[];

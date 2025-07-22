@@ -276,6 +276,8 @@ export class AztecHandler {
       case validatorStatus.EXITED:
         status = validatorStatusMessage.EXITED;
         break;
+      default:
+        status = "N/A";
     }
 
     const showRankingAndNetworkInfo = allValidators ? true : false;
@@ -328,7 +330,6 @@ export class AztecHandler {
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
       💰 ${bold("Staked Amount:")} ${code("100.00 STK")}
-      👤 ${bold("Proposer Address:")} ${code(rawData.proposerAddress)}
       💼 ${bold("Withdrawer Address:")} ${code(rawData.withdrawalCredentials)}
 
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
@@ -401,12 +402,6 @@ ${code(
       ❌ ${bold("Missed:")} ${code(`${rawData.currentEpochMetrics.epochBlockMissedVolume}`)}
       📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
       📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
-
-      🌐 ${bold("NETWORK INFO")} 🌐
-      🟢 ${bold("Total Active Validators:")} ${code(`${rawData.totalActiveValidators}`)}
-      🔴 ${bold("Total Inactive Validators:")} ${code(`${rawData.totalInactiveValidators}`)}
-      
-      
       `
     )}`;
 

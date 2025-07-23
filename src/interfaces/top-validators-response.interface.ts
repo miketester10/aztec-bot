@@ -1,11 +1,7 @@
-import { ValidatorBase } from "./validator-base.interface";
+import { Validator } from "./all-validators-response.interface";
 
 export interface TopValidatorsResponse {
   validators: TopValidator[];
 }
 
-export interface TopValidator extends ValidatorBase {
-  proposalSuccess: string;
-  lastProposed: string;
-  performanceScore: number;
-}
+export interface TopValidator extends Omit<Validator, "totalParticipatingEpoch"> {}

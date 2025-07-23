@@ -5,7 +5,6 @@ export interface ValidatorStatsResponse extends ValidatorBase {
   recentAttestations: RecentAttestation[];
   proposalHistory: ProposalHistory[];
   votingHistory: any[];
-  totalParticipatingEpochs: number;
   epochPerformanceHistory: EpochPerformanceHistory[];
   unclaimedRewards: string;
 }

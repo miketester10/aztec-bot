@@ -9,6 +9,7 @@ export interface ValidatorBase {
   totalBlocksProposed: number;
   totalBlocksMined: number;
   totalBlocksMissed: number;
+  totalParticipatingEpochs: number;
   x_handle?: string;
   x_user_id?: string;
   x_image_url?: string;

@@ -507,7 +507,7 @@ ${code(
       logger.error(`Axios Error: ${errorMessage}`);
 
       if (customErrorMessage?.includes("Validator not found."))
-        return `${customErrorMessage}\n\nAfter 1.1.2 update, validators need to be added in the set, again. Check if you're in the queue with the command:\n\n/queue <wallet_address>\n\nOtherwise, contact Atzec Team.`;
+        return `${customErrorMessage}\n\nAfter 1.1.2 update, validators need to be added in the set, again. Check if you're in the queue with the command:\n\n/queue <wallet_address>\n\nOtherwise, contact Aztec Team.`;
 
       return defaultErrorMessage;
     }

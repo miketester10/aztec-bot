@@ -8,7 +8,7 @@ import { ErrorResponse } from "../interfaces/error-response.interface";
 import { API } from "../consts/api";
 import { logger } from "../logger/logger";
 import { blockquote, bold, code, format, FormattableString, italic } from "gramio";
-import { validatorStatus, validatorStatusByAztec, validatorStatusMessage } from "../consts/validator-status";
+import { validatorStatus, validatorStatusMessage } from "../consts/validator-status";
 import { Block, NetworkHealthResponse } from "../interfaces/network-health-response.interface";
 import { ActiveNodesByCountryResponse, Country } from "../interfaces/active-nodes-by-country-response.interface";
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
@@ -22,6 +22,7 @@ import { ServerHandler } from "./server-handler";
 import { MyMessageContext } from "../interfaces/custom-context.interface";
 import { CacheHandler } from "./cache-handler";
 import { cacheKeys } from "../consts/cache-keys";
+import { ValidatorInQueue, ValidatorsInQueueResponse } from "../interfaces/validators-in-queue-response.interface";
 
 export class AztecHandler {
   private readonly PROXY_MODE: string = process.env.PROXY_MODE!;
@@ -81,9 +82,8 @@ export class AztecHandler {
 
       proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
-      if (!result.data.peers) {
-        throw new Error("Peer ID not found.");
-      }
+      if (!result.data.peers) throw new Error("Peer ID not found.");
+
       logger.info(`Peer ID: ${result.data.peers[0].id}`);
 
       return result.data;
@@ -124,6 +124,27 @@ export class AztecHandler {
 
       await this.cacheHandler.set<ValidatorStatsCombinedResponse>(key, response);
       return { validatorStats: result.data, allValidators };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getValidatorInQueue(address: string): Promise<ValidatorInQueue> {
+    try {
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const result = await axios.get<ValidatorsInQueueResponse>(API.VALIDATORS_IN_QUEUE, {
+        httpsAgent: proxyAgent,
+        headers: browserHeaders,
+      });
+
+      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
+
+      const validatorInQueue = result.data.validatorsInQueue.find((validator: ValidatorInQueue) => validator.address === address);
+      if (!validatorInQueue) throw new Error("Validator not found in queue.");
+
+      logger.info(`Validators in queue: ${result.data.validatorsInQueue.length}`);
+
+      return validatorInQueue;
     } catch (error) {
       throw error;
     }
@@ -355,6 +376,23 @@ export class AztecHandler {
     return message;
   }
 
+  createFormattedMessageForValidatorInQueue(rawData: ValidatorInQueue): FormattableString {
+    const formattedQueuedAt = formatDate(rawData.queuedAt, "dd/MM/yyyy, HH:mm:ss");
+
+    const message = format`${blockquote(
+      format`🔷 ${bold("VALIDATOR IN QUEUE")} 🔷
+
+      ℹ️ ${bold("Position:")} ${code(rawData.position)}
+      🗓 ${bold("Queued At:")} ${code(formattedQueuedAt)} 
+      🔑 ${bold("Address:")} ${code(rawData.address)} 
+      🔗 ${bold(" Transaction Hash:")} ${code(`${rawData.transactionHash}`)}
+      
+        `
+    )}`;
+
+    return message;
+  }
+
   createFormattedMessageForTop10Validators(rawData: TopValidatorsResponse): FormattableString {
     const message = format`${blockquote(
       format`🏆 ${bold("TOP 10 VALIDATORS ALL TIME")} 🏆
@@ -469,7 +507,7 @@ ${code(
       logger.error(`Axios Error: ${errorMessage}`);
 
       if (customErrorMessage?.includes("Validator not found."))
-        return `${customErrorMessage}\n\nAfter the 1.1.2 update, validators need to be added in the set, again. Check if you're in the queue; otherwise, contact the Atzec Team.`;
+        return `${customErrorMessage}\n\nAfter 1.1.2 update, validators need to be added in the set, again. Check if you're in the queue with the command:\n\n/queue <wallet_address>\n\nOtherwise, contact Atzec Team.`;
 
       return defaultErrorMessage;
     }
@@ -477,6 +515,7 @@ ${code(
     logger.error(`Unknown Error: ${unknownErrorMessage}`);
 
     if (unknownErrorMessage.includes("Peer ID not found.")) return unknownErrorMessage;
+    else if (unknownErrorMessage.includes("Validator not found in queue.")) return unknownErrorMessage;
 
     return defaultErrorMessage;
   }

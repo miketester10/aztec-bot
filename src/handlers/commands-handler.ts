@@ -42,6 +42,10 @@ export class CommandsHandler {
             description: "<wallet_address> - Validator stats",
           },
           {
+            command: "queue",
+            description: "<wallet_address> - Validator queue position",
+          },
+          {
             command: "top10",
             description: "Top 10 validators all time",
           },
@@ -60,8 +64,8 @@ export class CommandsHandler {
   }
 
   async newtworkHealth(ctx: MyMessageContext): Promise<void> {
-    await ctx.sendChatAction("typing");
     try {
+      await ctx.sendChatAction("typing");
       const result = await this.aztecHandler.getNetworkHealth();
       const message = this.aztecHandler.createFormattedMessageForNetworkHealth(result);
       await ctx.reply(message);
@@ -71,8 +75,8 @@ export class CommandsHandler {
   }
 
   async activeNodesByCountry(ctx: MyMessageContext): Promise<void> {
-    await ctx.sendChatAction("typing");
     try {
+      await ctx.sendChatAction("typing");
       const result = await this.aztecHandler.getActiveNodesByCountry();
       const message = this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
       await ctx.reply(message);
@@ -82,14 +86,15 @@ export class CommandsHandler {
   }
 
   async handleNodeCommand(ctx: MyMessageContext): Promise<void> {
-    await ctx.sendChatAction("typing");
-    const peerId = ctx.update?.message?.text?.split(" ")[1];
-    if (!peerId) {
-      const message = format`${code("Please enter a valid Peer ID.")}`;
-      await ctx.reply(message);
-      return;
-    }
     try {
+      await ctx.sendChatAction("typing");
+      const peerId = ctx.update?.message?.text?.split(" ")[1];
+      if (!peerId) {
+        const message = format`${code("Please enter a valid Peer ID.")}`;
+        await ctx.reply(message);
+        return;
+      }
+
       const result = await this.aztecHandler.getNodeInfo(peerId);
       const message = this.aztecHandler.createFormattedMessageForNodeInfo(result);
       await ctx.reply(message);
@@ -134,6 +139,24 @@ export class CommandsHandler {
     }
   }
 
+  async handleQueueCommand(ctx: MyMessageContext): Promise<void> {
+    try {
+      await ctx.sendChatAction("typing");
+      const address = ctx.update?.message?.text?.split(" ")[1]?.toLocaleLowerCase();
+      if (!address) {
+        const message = format`${code("Please enter a valid wallet address.")}`;
+        await ctx.reply(message);
+        return;
+      }
+
+      const result = await this.aztecHandler.getValidatorInQueue(address);
+      const message = this.aztecHandler.createFormattedMessageForValidatorInQueue(result);
+      await ctx.reply(message);
+    } catch (error) {
+      await this.handleError(error, ctx);
+    }
+  }
+
   async handleTop10Command(ctx: MyMessageContext | MyCallbackQueryContext): Promise<void> {
     const isCallbackContext = this.isCallbackContext(ctx);
 
@@ -159,8 +182,8 @@ export class CommandsHandler {
   }
 
   async handleEpochCommand(ctx: MyMessageContext): Promise<void> {
-    await ctx.sendChatAction("typing");
     try {
+      await ctx.sendChatAction("typing");
       const result = await this.aztecHandler.getCurrentEpochStats(ctx);
       const message = this.aztecHandler.createFormattedMessageForEpochStats(result);
       await ctx.reply(message);
@@ -204,6 +227,7 @@ ${blockquote(
 🔹${code("/active_nodes")} - to receive active nodes info
 🔹${code("/node <peer_id>")} - to receive node info
 🔹${code("/validator <wallet_address>")} - to receive validator stats
+🔹${code("/queue <wallet_address>")} - to receive validator queue position
 🔹${code("/top10")} - to receive top 10 validators all time
 🔹${code("/epoch")} - to receive current epoch stats
 🔹${code("/start")} - to start the bot

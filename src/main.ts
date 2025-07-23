@@ -33,6 +33,9 @@ bot.command("node", async (ctx: MyMessageContext) => {
 bot.command("validator", async (ctx: MyMessageContext) => {
   await commandsHandler.handleValidatorCommand(ctx);
 });
+bot.command("queue", async (ctx: MyMessageContext) => {
+  await commandsHandler.handleQueueCommand(ctx);
+});
 bot.command("top10", async (ctx: MyMessageContext) => {
   await commandsHandler.handleTop10Command(ctx);
 });

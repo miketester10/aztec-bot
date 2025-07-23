@@ -44,7 +44,7 @@ export class AztecHandler {
     try {
       const [{ data: blocks }, { validators }] = await Promise.all([axios.get<Block[]>(API.NETWORK_HEALTH), this.getAllValidators()]);
 
-      logger.info(`Pending Block: ${blocks[4].height}, Proven Block: ${blocks[1].height}, Current Slot: ${blocks[4].header.globalVariables.slotNumber}`);
+      logger.info(`Pending Block: ${blocks[5].height}, Proven Block: ${blocks[2].height}, Current Slot: ${blocks[5].header.globalVariables.slotNumber}`);
 
       return { blocks, validators };
     } catch (error) {
@@ -194,9 +194,9 @@ export class AztecHandler {
     const message = format`${blockquote(
       format`🔷 ${bold("NETWORK HEALTH")} 🔷
 
-      🏗️ ${bold("Pending Block:")} ${code(blocks[4].height)} 
-      🧱 ${bold("Proven Block:")} ${code(blocks[1].height)} 
-      🎰 ${bold("Current Slot:")} ${code(blocks[4].header.globalVariables.slotNumber)}
+      🏗️ ${bold("Pending Block:")} ${code(blocks[5].height)} 
+      🧱 ${bold("Proven Block:")} ${code(blocks[2].height)} 
+      🎰 ${bold("Current Slot:")} ${code(blocks[5].header.globalVariables.slotNumber)}
 
       🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
       🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}

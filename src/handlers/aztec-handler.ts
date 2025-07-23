@@ -306,13 +306,15 @@ export class AztecHandler {
       }
     });
 
-    const attestationSuccessRate = ((rawData.totalAttestationsSucceeded / (rawData.totalAttestationsSucceeded + rawData.totalAttestationsMissed)) * 100).toFixed(1);
+    const attestationSuccessRate = (rawData.totalAttestationsSucceeded / (rawData.totalAttestationsSucceeded + rawData.totalAttestationsMissed)) * 100;
 
-    const attestationMissRate = (100 - Number(attestationSuccessRate)).toFixed(1);
+    const attestationMissRate = 100 - attestationSuccessRate;
 
-    const proposalSuccessRate = (((rawData.totalBlocksProposed + rawData.totalBlocksMined) / (rawData.totalBlocksProposed + rawData.totalBlocksMined + rawData.totalBlocksMissed)) * 100).toFixed(1);
+    const proposalSuccessRate = ((rawData.totalBlocksProposed + rawData.totalBlocksMined) / (rawData.totalBlocksProposed + rawData.totalBlocksMined + rawData.totalBlocksMissed)) * 100;
 
-    const proposalMissRate = (100 - Number(proposalSuccessRate)).toFixed(1);
+    const proposalMissRate = 100 - proposalSuccessRate;
+
+    const formattingRate = (rate: number): string => (isNaN(rate) ? "N/A" : `${rate.toFixed(1)}%`);
 
     const statusAndRankingTemplate = showRankingAndNetworkInfo
       ? format`ℹ️ ${bold("Status:")} ${status} 
@@ -337,14 +339,14 @@ export class AztecHandler {
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(rawData.totalAttestationsSucceeded)}
       ❌ ${bold("Missed:")} ${code(rawData.totalAttestationsMissed)}
-      📈 ${bold("Success Rate:")} ${code(`${attestationSuccessRate}%`)}
-      📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
+      📈 ${bold("Success Rate:")} ${code(formattingRate(attestationSuccessRate))}
+      📉 ${bold("Miss Rate:")} ${code(formattingRate(attestationMissRate))}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     
       ✅ ${bold("Successful (Proposed/Mined):")} ${code(`${rawData.totalBlocksProposed + rawData.totalBlocksMined}`)}
       ❌ ${bold("Missed:")} ${code(`${rawData.totalBlocksMissed}`)}
-      📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
-      📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
+      📈 ${bold("Success Rate:")} ${code(formattingRate(proposalSuccessRate))}
+      📉 ${bold("Miss Rate:")} ${code(formattingRate(proposalMissRate))}
       
       ${networkInfoTemplate}
 
@@ -377,16 +379,14 @@ ${code(
   }
 
   createFormattedMessageForEpochStats(rawData: CurrentEpochStatsResponse): FormattableString {
-    const attestationSuccessRate = ((rawData.currentEpochMetrics.successCount / (rawData.currentEpochMetrics.successCount + rawData.currentEpochMetrics.missCount)) * 100).toFixed(2);
+    const attestationSuccessRate = (rawData.currentEpochMetrics.successCount / (rawData.currentEpochMetrics.successCount + rawData.currentEpochMetrics.missCount)) * 100;
 
-    const attestationMissRate = (100 - Number(attestationSuccessRate)).toFixed(2);
+    const attestationMissRate = 100 - attestationSuccessRate;
 
-    const proposalSuccessRate = (
-      (rawData.currentEpochMetrics.epochBlockProducedVolume / (rawData.currentEpochMetrics.epochBlockProducedVolume + rawData.currentEpochMetrics.epochBlockMissedVolume)) *
-      100
-    ).toFixed(2);
+    const proposalSuccessRate =
+      (rawData.currentEpochMetrics.epochBlockProducedVolume / (rawData.currentEpochMetrics.epochBlockProducedVolume + rawData.currentEpochMetrics.epochBlockMissedVolume)) * 100;
 
-    const proposalMissRate = (100 - Number(proposalSuccessRate)).toFixed(2);
+    const proposalMissRate = 100 - proposalSuccessRate;
 
     const message = format`${blockquote(
       format`🔷 ${bold("EPOCH DETAILS")} 🔷
@@ -396,14 +396,14 @@ ${code(
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(rawData.currentEpochMetrics.successCount)}
       ❌ ${bold("Missed:")} ${code(rawData.currentEpochMetrics.missCount)}
-      📈 ${bold("Success Rate:")} ${code(`${attestationSuccessRate}%`)}
-      📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate}%`)}
+      📈 ${bold("Success Rate:")} ${code(`${attestationSuccessRate.toFixed(2)}%`)}
+      📉 ${bold("Miss Rate:")} ${code(`${attestationMissRate.toFixed(2)}%`)}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     
       ✅ ${bold("Successful (Proposed/Mined):")} ${code(`${rawData.currentEpochMetrics.epochBlockProducedVolume}`)}
       ❌ ${bold("Missed:")} ${code(`${rawData.currentEpochMetrics.epochBlockMissedVolume}`)}
-      📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate}%`)}
-      📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate}%`)}
+      📈 ${bold("Success Rate:")} ${code(`${proposalSuccessRate.toFixed(2)}%`)}
+      📉 ${bold("Miss Rate:")} ${code(`${proposalMissRate.toFixed(2)}%`)}
       `
     )}`;
 

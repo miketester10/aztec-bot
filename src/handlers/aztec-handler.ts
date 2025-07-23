@@ -468,7 +468,8 @@ ${code(
       const errorMessage = customErrorMessage ? customErrorMessage : error.message;
       logger.error(`Axios Error: ${errorMessage}`);
 
-      if (customErrorMessage?.includes("Validator not found.")) return customErrorMessage;
+      if (customErrorMessage?.includes("Validator not found."))
+        return `${customErrorMessage}\n\nAfter the 1.1.2 update, validators need to be added in the set, again. Check if you're in the queue; otherwise, contact the Atzec Team.`;
 
       return defaultErrorMessage;
     }

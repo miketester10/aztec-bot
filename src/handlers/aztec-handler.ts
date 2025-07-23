@@ -333,7 +333,6 @@ export class AztecHandler {
       🔑 ${bold("Address:")} ${code(rawData.address)}
       💼 ${bold("Withdrawer Address:")} ${code(rawData.withdrawalCredentials)}
       💰 ${bold("Staked Amount:")} ${code("100.00 STK")}
-      🎁 ${bold("Rewards:")}
       
 
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 

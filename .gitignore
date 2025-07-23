@@ -35,3 +35,4 @@ dist-ssr
 check_proxies.sh
 proxies.json
 
+.github

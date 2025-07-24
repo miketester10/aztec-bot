@@ -335,11 +335,12 @@ export class AztecHandler {
 
     const proposalMissRate = 100 - proposalSuccessRate;
 
+    const formattingRank = (obj: typeof validatorRank): string => (obj.rank === -1 ? "N/A" : `${obj.rank}`);
     const formattingRate = (rate: number): string => (isNaN(rate) ? "N/A" : `${rate.toFixed(1)}%`);
 
     const statusAndRankingTemplate = showRankingAndNetworkInfo
       ? format`ℹ️ ${bold("Status:")} ${status} 
-               🏆 ${bold("Ranking:")} ${code(`${validatorRank.rank}${validatorRank.emoji}`)}`
+               🏆 ${bold("Ranking:")} ${code(`${formattingRank(validatorRank)}${validatorRank.emoji}`)}`
       : format`ℹ️ ${bold("Status:")} ${status}`;
 
     const networkInfoTemplate = showRankingAndNetworkInfo
@@ -465,7 +466,7 @@ ${code(
 
       logger.info(`Total validators: ${result.data.validators.length}`);
 
-      await this.cacheHandler.set<AllValidatorsResponse>(key, result.data, { ttl: 14400, smart: true });
+      await this.cacheHandler.set<AllValidatorsResponse>(key, result.data, { ttl: 7200, smart: true });
       return result.data;
     } catch (error) {
       throw error;
@@ -514,8 +515,7 @@ ${code(
     const unknownErrorMessage = (error as Error).message;
     logger.error(`Unknown Error: ${unknownErrorMessage}`);
 
-    if (unknownErrorMessage.includes("Peer ID not found.")) return unknownErrorMessage;
-    else if (unknownErrorMessage.includes("Validator not found in queue.")) return unknownErrorMessage;
+    if (unknownErrorMessage.includes("Peer ID not found.") || unknownErrorMessage.includes("Validator not found in queue.")) return unknownErrorMessage;
 
     return defaultErrorMessage;
   }

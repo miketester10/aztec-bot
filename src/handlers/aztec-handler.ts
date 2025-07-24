@@ -14,7 +14,7 @@ import { ActiveNodesByCountryResponse, Country } from "../interfaces/active-node
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import UserAgent from "user-agents";
-import { format as formatDate, parseISO } from "date-fns";
+import { DateArg, format as formatDate } from "date-fns";
 import { ProxyHandler } from "./proxy-handler";
 import { headersProperties, referer } from "../consts/headers";
 import { ProxyAgentAndBrowserHeaders } from "../types/proxy-agent-and-browser-headers.type";
@@ -267,11 +267,11 @@ export class AztecHandler {
     const location = `${city ? `${country}, ${city}` : country}`;
     const coordinate = `Lat. ${rawData.peers![0].multi_addresses[0].ip_info[0].latitude} - Long. ${rawData.peers![0].multi_addresses[0].ip_info[0].longitude}`;
 
-    const firstSeen = parseISO(rawData.peers![0].created_at);
-    const lastSeen = parseISO(rawData.peers![0].last_seen);
+    const firstSeen = rawData.peers![0].created_at;
+    const lastSeen = rawData.peers![0].last_seen;
 
-    const formattedFirstSeen = formatDate(firstSeen, "dd/MM/yyyy, HH:mm:ss");
-    const formattedLastSeen = formatDate(lastSeen, "dd/MM/yyyy, HH:mm:ss");
+    const formattedFirstSeen = this.formattingDate(firstSeen);
+    const formattedLastSeen = this.formattingDate(lastSeen);
 
     const message = format`${blockquote(
       format`🔷 ${bold("NODE INFO")} 🔷
@@ -327,6 +327,9 @@ export class AztecHandler {
       }
     });
 
+    const formattingRank = (obj: typeof validatorRank): string => (obj.rank === -1 ? "N/A" : `${obj.rank}`);
+    const formattingRate = (rate: number): string => (isNaN(rate) ? "N/A" : `${rate.toFixed(1)}%`);
+
     const attestationSuccessRate = (rawData.totalAttestationsSucceeded / (rawData.totalAttestationsSucceeded + rawData.totalAttestationsMissed)) * 100;
 
     const attestationMissRate = 100 - attestationSuccessRate;
@@ -335,12 +338,18 @@ export class AztecHandler {
 
     const proposalMissRate = 100 - proposalSuccessRate;
 
-    const formattingRank = (obj: typeof validatorRank): string => (obj.rank === -1 ? "N/A" : `${obj.rank}`);
-    const formattingRate = (rate: number): string => (isNaN(rate) ? "N/A" : `${rate.toFixed(1)}%`);
+    const formattedRank = formattingRank(validatorRank);
+    const formattedActivationDate = this.formattingDate(rawData.activationDate);
+    const formattedRate = {
+      attestationSuccessRate: formattingRate(attestationSuccessRate),
+      attestationMissRate: formattingRate(attestationMissRate),
+      proposalSuccessRate: formattingRate(proposalSuccessRate),
+      proposalMissRate: formattingRate(proposalMissRate),
+    };
 
     const statusAndRankingTemplate = showRankingAndNetworkInfo
       ? format`ℹ️ ${bold("Status:")} ${status} 
-               🏆 ${bold("Ranking:")} ${code(`${formattingRank(validatorRank)}${validatorRank.emoji}`)}`
+               🏆 ${bold("Ranking:")} ${code(`${formattedRank}${validatorRank.emoji}`)}`
       : format`ℹ️ ${bold("Status:")} ${status}`;
 
     const networkInfoTemplate = showRankingAndNetworkInfo
@@ -356,19 +365,20 @@ export class AztecHandler {
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
       💼 ${bold("Withdrawer Address:")} ${code(rawData.withdrawalCredentials)}
+      🕒 ${bold("Activation:")} ${code(formattedActivationDate)}
       💰 ${bold("Staked Amount:")} ${code("100.00 STK")}
       
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(rawData.totalAttestationsSucceeded)}
       ❌ ${bold("Missed:")} ${code(rawData.totalAttestationsMissed)}
-      📈 ${bold("Success Rate:")} ${code(formattingRate(attestationSuccessRate))}
-      📉 ${bold("Miss Rate:")} ${code(formattingRate(attestationMissRate))}
+      📈 ${bold("Success Rate:")} ${code(formattedRate.attestationSuccessRate)}
+      📉 ${bold("Miss Rate:")} ${code(formattedRate.attestationMissRate)}
 
       📊 ${bold("PROPOSAL PERFORMANCE")} 📊     
       ✅ ${bold("Successful (Proposed/Mined):")} ${code(`${rawData.totalBlocksProposed + rawData.totalBlocksMined}`)}
       ❌ ${bold("Missed:")} ${code(`${rawData.totalBlocksMissed}`)}
-      📈 ${bold("Success Rate:")} ${code(formattingRate(proposalSuccessRate))}
-      📉 ${bold("Miss Rate:")} ${code(formattingRate(proposalMissRate))}
+      📈 ${bold("Success Rate:")} ${code(formattedRate.proposalSuccessRate)}
+      📉 ${bold("Miss Rate:")} ${code(formattedRate.proposalMissRate)}
       
       ${networkInfoTemplate}
 
@@ -378,7 +388,7 @@ export class AztecHandler {
   }
 
   createFormattedMessageForValidatorInQueue(rawData: ValidatorInQueue): FormattableString {
-    const formattedQueuedAt = formatDate(rawData.queuedAt, "dd/MM/yyyy, HH:mm:ss");
+    const formattedQueuedAt = this.formattingDate(rawData.queuedAt);
 
     const message = format`${blockquote(
       format`🔷 ${bold("VALIDATOR IN QUEUE")} 🔷
@@ -497,6 +507,10 @@ ${code(
   private checkWichIPmadeRequest(proxyAgent: HttpsProxyAgent<string>): void {
     const usedIP = proxyAgent.connectOpts.host;
     if (usedIP) logger.debug(`Request made with IP: ${usedIP}`);
+  }
+
+  private formattingDate(date: DateArg<Date>): string {
+    return formatDate(date, "dd/MM/yyyy, HH:mm:ss");
   }
 
   handleError(error: unknown): string {

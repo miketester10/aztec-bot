@@ -382,8 +382,8 @@ export class AztecHandler {
     const message = format`${blockquote(
       format`🔷 ${bold("VALIDATOR IN QUEUE")} 🔷
 
-      ℹ️ ${bold("Position:")} ${code(rawData.position)}
-      🗓 ${bold("Queued At:")} ${code(formattedQueuedAt)} 
+      📍 ${bold("Position:")} ${code(rawData.position)}
+      🕒 ${bold("Queued Since:")} ${code(formattedQueuedAt)} 
       🔑 ${bold("Address:")} ${code(rawData.address)} 
       🔗 ${bold(" Transaction Hash:")} ${code(`${rawData.transactionHash}`)}
       

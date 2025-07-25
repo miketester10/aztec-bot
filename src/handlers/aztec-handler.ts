@@ -390,11 +390,18 @@ export class AztecHandler {
   createFormattedMessageForValidatorInQueue(rawData: ValidatorInQueue): FormattableString {
     const formattedQueuedAt = this.formattingDate(rawData.queuedAt);
 
-    const minutes = rawData.position * 20; // 20 minutes per position
-    const days = Math.floor(minutes / 1440); // 1440 minutes in a day
-    const hours = Math.floor((minutes % 1440) / 60);
-    const mins = minutes % 60;
-    const eta = `${days.toString().padStart(2, "0")}d:${hours.toString().padStart(2, "0")}h:${mins.toString().padStart(2, "0")}m`;
+    const MINUTES_PER_QUEUE_POSITION = 20;
+    const MINUTES_PER_DAY = 1440;
+    const MINUTES_PER_HOUR = 60;
+
+    const totalMinutes = rawData.position * MINUTES_PER_QUEUE_POSITION;
+    const days = Math.floor(totalMinutes / MINUTES_PER_DAY);
+    const remainingMinutes = totalMinutes % MINUTES_PER_DAY;
+    const hours = Math.floor(remainingMinutes / MINUTES_PER_HOUR);
+    const minutes = remainingMinutes % MINUTES_PER_HOUR;
+
+    const formattingUnit = (value: number): string => value.toString().padStart(2, "0");
+    const eta = `${formattingUnit(days)}d:${formattingUnit(hours)}h:${formattingUnit(minutes)}m`;
 
     const message = format`${blockquote(
       format`🔷 ${bold("VALIDATOR IN QUEUE")} 🔷
@@ -403,7 +410,7 @@ export class AztecHandler {
       ⏳ ${bold("ETA:")} ${code(eta)}
       🕒 ${bold("Queued Since:")} ${code(formattedQueuedAt)} 
       🔑 ${bold("Address:")} ${code(rawData.address)} 
-      🔗 ${bold(" Transaction Hash:")} ${code(`${rawData.transactionHash}`)}
+      🔗 ${bold(" Transaction Hash:")} ${code(rawData.transactionHash)}
       
         `
     )}`;

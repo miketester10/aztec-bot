@@ -390,10 +390,17 @@ export class AztecHandler {
   createFormattedMessageForValidatorInQueue(rawData: ValidatorInQueue): FormattableString {
     const formattedQueuedAt = this.formattingDate(rawData.queuedAt);
 
+    const minutes = rawData.position * 20; // 20 minutes per position
+    const days = Math.floor(minutes / 1440); // 1440 minutes in a day
+    const hours = Math.floor((minutes % 1440) / 60);
+    const mins = minutes % 60;
+    const eta = `${days.toString().padStart(2, "0")}d:${hours.toString().padStart(2, "0")}h:${mins.toString().padStart(2, "0")}m`;
+
     const message = format`${blockquote(
       format`🔷 ${bold("VALIDATOR IN QUEUE")} 🔷
 
       📍 ${bold("Position:")} ${code(rawData.position)}
+      ⏳ ${bold("ETA:")} ${code(eta)}
       🕒 ${bold("Queued Since:")} ${code(formattedQueuedAt)} 
       🔑 ${bold("Address:")} ${code(rawData.address)} 
       🔗 ${bold(" Transaction Hash:")} ${code(`${rawData.transactionHash}`)}

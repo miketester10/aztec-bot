@@ -15,6 +15,7 @@
 - Dockerized for easy deployment
 - Webhook and long polling support
 - Logging with Pino
+- Input validation with Zod schema validation
 
 ## Tech Stack
 
@@ -28,6 +29,7 @@
   - [dotenv](https://github.com/motdotla/dotenv)
   - [pino](https://getpino.io/) (logging)
   - [https-proxy-agent](https://github.com/TooTallNate/node-https-proxy-agent)
+  - [Zod](https://zod.dev/) (input validation)
 - **Database/Cache:** Redis
 - **Containerization:** Docker
 - **CI/CD:** GitHub Actions
@@ -99,6 +101,15 @@ REDIS_PASSWORD=your_redis_password
 - `docker-compose up -d` — Start bot and Redis in containers
 - `docker-compose down` — Stop and remove the containers
 
+### Input Validation
+
+The bot uses Zod for robust input validation to ensure data integrity and security:
+
+- **Ethereum Address Validation**: Validates wallet addresses with format `0x` followed by 40 hexadecimal characters
+- **Peer ID Validation**: Validates node peer IDs starting with `16Uiu2HA` and containing 53 Base58 characters
+
+Validation schemas are defined in `src/schemas/inputValidatorSchemas.ts` and are automatically applied to user inputs for commands like `/node`, `/validator` and `/queue`.
+
 ### Webhook URL Generation
 
 You can use the provided script `generate_ngrok_url.sh` to automatically start ngrok and update your `.env` file with the correct `WEBHOOK_URL` for local development:
@@ -116,7 +127,9 @@ This script will launch ngrok, fetch the public URL, and update your `.env` file
 │   ├── handlers/         # Business logic (commands, aztec, cache, proxy, server)
 │   ├── interfaces/       # TypeScript interfaces
 │   ├── types/            # Custom types
-│   ├── consts/           # Constants (API endpoints, roles, headers)
+│   ├── consts/           # Constants (API endpoints)
+│   ├── enums/            # Enums (cache keys, callback payloads, input types, etc.)
+│   ├── schemas/          # Zod validation schemas
 │   ├── logger/           # Logging setup
 │   └── main.ts           # Entry point
 ├── redis/                # Redis docker-compose config and .env

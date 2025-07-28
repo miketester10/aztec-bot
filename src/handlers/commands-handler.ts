@@ -6,6 +6,8 @@ import { CacheHandler } from "./cache-handler";
 import { CallbackRouter } from "../interfaces/callback-router.interface";
 import { callbackPayload } from "../consts/callback-payload";
 import { cacheKeys } from "../consts/cache-keys";
+import { input, InputType } from "../consts/input";
+import { inputValidatorSchemas } from "../schemas/inputValidatorSchemas";
 
 export class CommandsHandler {
   private static _instance: CommandsHandler;
@@ -89,7 +91,7 @@ export class CommandsHandler {
     try {
       await ctx.sendChatAction("typing");
       const peerId = ctx.update?.message?.text?.split(" ")[1];
-      if (!peerId) {
+      if (!this.validateInput(peerId, input.PEER_ID)) {
         const message = format`${code("Please enter a valid Peer ID.")}`;
         await ctx.reply(message);
         return;
@@ -110,16 +112,16 @@ export class CommandsHandler {
     try {
       if (!isCallbackContext) {
         await ctx.sendChatAction("typing");
-        address = ctx.update?.message?.text?.split(" ")[1]?.toLocaleLowerCase();
-        if (!address) {
+        address = ctx.update?.message?.text?.split(" ")[1]?.toLowerCase();
+        if (!this.validateInput(address, input.ETH_ADDRESS)) {
           const message = format`${code("Please enter a valid wallet address.")}`;
           await ctx.reply(message);
           return;
         }
         await this.cacheHandler.delete(`${cacheKeys.VALIDATOR_STATS}:${address}`);
       } else {
-        address = (ctx.update?.callback_query?.message as TelegramMessage).reply_to_message?.text?.split(" ")[1]?.toLocaleLowerCase();
-        if (!address) {
+        address = (ctx.update?.callback_query?.message as TelegramMessage).reply_to_message?.text?.split(" ")[1]?.toLowerCase();
+        if (!this.validateInput(address, input.ETH_ADDRESS)) {
           throw new Error("Impossible to get address from callback query.");
         }
       }
@@ -142,8 +144,8 @@ export class CommandsHandler {
   async handleQueueCommand(ctx: MyMessageContext): Promise<void> {
     try {
       await ctx.sendChatAction("typing");
-      const address = ctx.update?.message?.text?.split(" ")[1]?.toLocaleLowerCase();
-      if (!address) {
+      const address = ctx.update?.message?.text?.split(" ")[1]?.toLowerCase();
+      if (!this.validateInput(address, input.ETH_ADDRESS)) {
         const message = format`${code("Please enter a valid wallet address.")}`;
         await ctx.reply(message);
         return;
@@ -311,6 +313,25 @@ ${blockquote(
     return callbackRouter;
   }
 
+  // If this method returns true, then input is valid and is of type string.
+  private validateInput(input: string | undefined, validationType: InputType): input is string {
+    const schema = inputValidatorSchemas[validationType];
+    const validation = schema.safeParse(input);
+
+    if (!validation.success) {
+      const errors = validation.error.issues.map((issue) => issue.message).join(", ");
+      logger.error(`Validation failed for input ${validationType}: ${errors}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  // If this method returns true, then ctx is of type MyCallbackQueryContext.
+  private isCallbackContext(ctx: MyMessageContext | MyCallbackQueryContext): ctx is MyCallbackQueryContext {
+    return !("reply" in ctx); // .reply() method is only available in MyMessageContext
+  }
+
   private async replyOrEdit(ctx: MyMessageContext | MyCallbackQueryContext, text: FormattableString, options?: Object): Promise<void> {
     if (this.isCallbackContext(ctx)) {
       await ctx.editText(text, options).then(() => {
@@ -319,11 +340,6 @@ ${blockquote(
     } else {
       await ctx.reply(text, options);
     }
-  }
-
-  // If this method returns true, then ctx is of type MyCallbackQueryContext.
-  private isCallbackContext(ctx: MyMessageContext | MyCallbackQueryContext): ctx is MyCallbackQueryContext {
-    return !("reply" in ctx); // .reply() method is only available in MyMessageContext
   }
 
   private async handleError(error: unknown, ctx: MyMessageContext | MyCallbackQueryContext): Promise<void> {

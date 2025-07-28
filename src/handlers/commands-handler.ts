@@ -92,7 +92,7 @@ export class CommandsHandler {
       await ctx.sendChatAction("typing");
       const peerId = ctx.update?.message?.text?.split(" ")[1];
       if (!this.validateInput(peerId, Input.PEER_ID)) {
-        const message = format`${code("Please enter a valid Peer ID.\n\nExample:\n/node 16Uiu2HAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")}`;
+        const message = format`${code("Please enter a valid Peer ID.\n\nExample:\n/node 16Uiu2HAm2t758uSrVxEoPQPLQaWD6aNqWMTw32rKsRDQfoGTMWyP")}`;
         await ctx.reply(message);
         return;
       }

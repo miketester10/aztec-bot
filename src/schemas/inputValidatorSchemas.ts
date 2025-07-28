@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { InputType } from "../consts/input";
+import { InputType } from "../enums/input.enum";
 
 export const inputValidatorSchemas: Record<InputType, z.ZodType> = {
   ETH_ADDRESS: z

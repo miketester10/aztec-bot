@@ -4,7 +4,7 @@ import { Bot, code, format, TelegramUpdate, webhookHandler } from "gramio";
 import { Server } from "http";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { config } from "dotenv";
-import { roles } from "../consts/roles";
+import { Roles } from "../enums/roles.enum";
 import { CacheHandler } from "./cache-handler";
 config();
 
@@ -107,7 +107,7 @@ export class ServerHandler {
     // Check if the command is /epoch (apply rate limiter to this command only)
     const isEpochCommand = command === "/epoch";
 
-    if (!isEpochCommand || userID === roles.ADMIN) {
+    if (!isEpochCommand || userID === Roles.ADMIN) {
       return next(); // Skip rate limit if it's not /epoch command or if the user is an admin
     }
 

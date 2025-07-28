@@ -8,7 +8,7 @@ import { ErrorResponse } from "../interfaces/error-response.interface";
 import { API } from "../consts/api";
 import { logger } from "../logger/logger";
 import { blockquote, bold, code, format, FormattableString, italic } from "gramio";
-import { validatorStatus, validatorStatusMessage } from "../consts/validator-status";
+import { ValidatorStatus, ValidatorStatusMessage } from "../enums/validator-status.enum";
 import { Block, NetworkHealthResponse } from "../interfaces/network-health-response.interface";
 import { ActiveNodesByCountryResponse, Country } from "../interfaces/active-nodes-by-country-response.interface";
 import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
@@ -16,12 +16,12 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import UserAgent from "user-agents";
 import { DateArg, format as formatDate } from "date-fns";
 import { ProxyHandler } from "./proxy-handler";
-import { headersProperties, referer } from "../consts/headers";
+import { HeadersProperties, Referer } from "../enums/headers.type.enum";
 import { ProxyAgentAndBrowserHeaders } from "../types/proxy-agent-and-browser-headers.type";
 import { ServerHandler } from "./server-handler";
 import { MyMessageContext } from "../interfaces/custom-context.interface";
 import { CacheHandler } from "./cache-handler";
-import { cacheKeys } from "../consts/cache-keys";
+import { CacheKeys } from "../enums/cache-keys.enum";
 import { ValidatorInQueue, ValidatorsInQueueResponse } from "../interfaces/validators-in-queue-response.interface";
 
 export class AztecHandler {
@@ -55,7 +55,7 @@ export class AztecHandler {
 
   async getActiveNodesByCountry(): Promise<ActiveNodesByCountryResponse> {
     try {
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.NETHERMIND);
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.NETHERMIND);
       const result = await axios.get<ActiveNodesByCountryResponse>(API.ACTIVE_NODES_BY_COUNTRY, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
@@ -74,7 +74,7 @@ export class AztecHandler {
 
   async getNodeInfo(peerId: string): Promise<NodeInfoResponse> {
     try {
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.NETHERMIND);
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.NETHERMIND);
       const result = await axios.get<NodeInfoResponse>(`${API.NODE_INFO}?id=${peerId}`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
@@ -93,13 +93,13 @@ export class AztecHandler {
   }
 
   async getValidatorStats(validatorAddress: string): Promise<ValidatorStatsCombinedResponse> {
-    const key = `${cacheKeys.VALIDATOR_STATS}:${validatorAddress}`;
+    const key = `${CacheKeys.VALIDATOR_STATS}:${validatorAddress}`;
 
     try {
       const cache = await this.cacheHandler.get<ValidatorStatsCombinedResponse>(key);
       if (cache) return cache;
 
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
       const result = await axios.get<ValidatorStatsResponse>(`${API.VALIDATORS_STATS}/${validatorAddress}`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
@@ -131,7 +131,7 @@ export class AztecHandler {
 
   async getValidatorInQueue(address: string): Promise<ValidatorInQueue> {
     try {
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
       const result = await axios.get<ValidatorsInQueueResponse>(API.VALIDATORS_IN_QUEUE, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
@@ -151,13 +151,13 @@ export class AztecHandler {
   }
 
   async getTop10Validators(): Promise<TopValidatorsResponse> {
-    const key = cacheKeys.TOP_10_VALIDATORS;
+    const key = CacheKeys.TOP_10_VALIDATORS;
 
     try {
       const cache = await this.cacheHandler.get<TopValidatorsResponse>(key);
       if (cache) return cache;
 
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
       const result = await axios.get<TopValidatorsResponse>(`${API.TOP_VALIDATORS}?startEpoch=1&endEpoch=99999`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
@@ -174,7 +174,7 @@ export class AztecHandler {
 
   async getCurrentEpochStats(ctx: MyMessageContext): Promise<CurrentEpochStatsResponse> {
     try {
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
       const result = await axios.get<CurrentEpochStatsResponse>(API.CURRENT_EPOCH_STATS, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
@@ -205,9 +205,9 @@ export class AztecHandler {
 
     validators.forEach((validator: Validator) => {
       // Count active and inactive validators
-      if (validator.status === validatorStatus.ACTIVE) {
+      if (validator.status === ValidatorStatus.ACTIVE) {
         totalActiveValidators++;
-      } else if (validator.status === validatorStatus.EXITED) {
+      } else if (validator.status === ValidatorStatus.EXITED) {
         totalInactiveValidators++;
       }
     });
@@ -293,11 +293,11 @@ export class AztecHandler {
   createFormattedMessageForValidatorStats({ validatorStats: rawData, allValidators }: ValidatorStatsCombinedResponse): FormattableString {
     let status = "";
     switch (rawData.status) {
-      case validatorStatus.ACTIVE:
-        status = validatorStatusMessage.ACTIVE;
+      case ValidatorStatus.ACTIVE:
+        status = ValidatorStatusMessage.ACTIVE;
         break;
-      case validatorStatus.EXITED:
-        status = validatorStatusMessage.EXITED;
+      case ValidatorStatus.EXITED:
+        status = ValidatorStatusMessage.EXITED;
         break;
       default:
         status = "N/A";
@@ -320,9 +320,9 @@ export class AztecHandler {
       }
 
       // Count active and inactive validators
-      if (validator.status === validatorStatus.ACTIVE) {
+      if (validator.status === ValidatorStatus.ACTIVE) {
         totalActiveValidators++;
-      } else if (validator.status === validatorStatus.EXITED) {
+      } else if (validator.status === ValidatorStatus.EXITED) {
         totalInactiveValidators++;
       }
     });
@@ -474,13 +474,13 @@ ${code(
   }
 
   private async getAllValidators(): Promise<AllValidatorsResponse> {
-    const key = `${cacheKeys.ALL_VALIDATORS}`;
+    const key = `${CacheKeys.ALL_VALIDATORS}`;
 
     try {
       const cache = await this.cacheHandler.get<AllValidatorsResponse>(key);
       if (cache) return cache;
 
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(referer.DASHTEC);
+      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
       const result = await axios.get<AllValidatorsResponse>(`${API.VALIDATORS_STATS}`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
@@ -505,14 +505,14 @@ ${code(
 
     const userAgent = new UserAgent().toString();
     const browserHeaders: RawAxiosRequestHeaders = {
-      "Accept": headersProperties.ACCEPT,
-      "Accept-Language": headersProperties.ACCEPT_LANGUAGE,
-      "Connection": headersProperties.CONNECTION,
+      "Accept": HeadersProperties.ACCEPT,
+      "Accept-Language": HeadersProperties.ACCEPT_LANGUAGE,
+      "Connection": HeadersProperties.CONNECTION,
       "Referer": referer,
-      "Sec-Fetch-Dest": headersProperties.SEC_FETCH_DEST,
-      "Sec-Fetch-Mode": headersProperties.SEC_FETCH_MODE,
-      "Sec-Fetch-Site": headersProperties.SEC_FETCH_SITE,
-      "TE": headersProperties.TE,
+      "Sec-Fetch-Dest": HeadersProperties.SEC_FETCH_DEST,
+      "Sec-Fetch-Mode": HeadersProperties.SEC_FETCH_MODE,
+      "Sec-Fetch-Site": HeadersProperties.SEC_FETCH_SITE,
+      "TE": HeadersProperties.TE,
       "User-Agent": userAgent,
     };
     return { proxyAgent, browserHeaders };

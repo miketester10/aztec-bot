@@ -4,9 +4,9 @@ import { logger } from "../logger/logger";
 import { AztecHandler } from "./aztec-handler";
 import { CacheHandler } from "./cache-handler";
 import { CallbackRouter } from "../interfaces/callback-router.interface";
-import { callbackPayload } from "../consts/callback-payload";
-import { cacheKeys } from "../consts/cache-keys";
-import { input, InputType } from "../consts/input";
+import { CallbackPayload } from "../enums/callback-payload.enum";
+import { CacheKeys } from "../enums/cache-keys.enum";
+import { Input, InputType } from "../enums/input.enum";
 import { inputValidatorSchemas } from "../schemas/inputValidatorSchemas";
 
 export class CommandsHandler {
@@ -91,7 +91,7 @@ export class CommandsHandler {
     try {
       await ctx.sendChatAction("typing");
       const peerId = ctx.update?.message?.text?.split(" ")[1];
-      if (!this.validateInput(peerId, input.PEER_ID)) {
+      if (!this.validateInput(peerId, Input.PEER_ID)) {
         const message = format`${code("Please enter a valid Peer ID.")}`;
         await ctx.reply(message);
         return;
@@ -113,15 +113,15 @@ export class CommandsHandler {
       if (!isCallbackContext) {
         await ctx.sendChatAction("typing");
         address = ctx.update?.message?.text?.split(" ")[1]?.toLowerCase();
-        if (!this.validateInput(address, input.ETH_ADDRESS)) {
+        if (!this.validateInput(address, Input.ETH_ADDRESS)) {
           const message = format`${code("Please enter a valid wallet address.")}`;
           await ctx.reply(message);
           return;
         }
-        await this.cacheHandler.delete(`${cacheKeys.VALIDATOR_STATS}:${address}`);
+        await this.cacheHandler.delete(`${CacheKeys.VALIDATOR_STATS}:${address}`);
       } else {
         address = (ctx.update?.callback_query?.message as TelegramMessage).reply_to_message?.text?.split(" ")[1]?.toLowerCase();
-        if (!this.validateInput(address, input.ETH_ADDRESS)) {
+        if (!this.validateInput(address, Input.ETH_ADDRESS)) {
           throw new Error("Impossible to get address from callback query.");
         }
       }
@@ -145,7 +145,7 @@ export class CommandsHandler {
     try {
       await ctx.sendChatAction("typing");
       const address = ctx.update?.message?.text?.split(" ")[1]?.toLowerCase();
-      if (!this.validateInput(address, input.ETH_ADDRESS)) {
+      if (!this.validateInput(address, Input.ETH_ADDRESS)) {
         const message = format`${code("Please enter a valid wallet address.")}`;
         await ctx.reply(message);
         return;
@@ -164,7 +164,7 @@ export class CommandsHandler {
 
     try {
       if (!isCallbackContext) {
-        await this.cacheHandler.delete(cacheKeys.TOP_10_VALIDATORS);
+        await this.cacheHandler.delete(CacheKeys.TOP_10_VALIDATORS);
         await ctx.sendChatAction("typing");
       }
 
@@ -267,7 +267,7 @@ ${blockquote(
       info: async (ctx, payload): Promise<void> => {
         let message;
         switch (payload) {
-          case callbackPayload.RANK_SCORE_CRITERIA:
+          case CallbackPayload.RANK_SCORE_CRITERIA:
             message = format`${blockquote(
               format`ℹ️ ${bold("RANKING SCORE CALCULATION")} ℹ️
 
@@ -297,12 +297,12 @@ ${blockquote(
       },
       back: async (ctx, payload): Promise<void> => {
         switch (payload) {
-          case callbackPayload.TOP_10_VALIDATORS:
+          case CallbackPayload.TOP_10_VALIDATORS:
             logger.debug(`Editing the message...`);
             await this.handleTop10Command(ctx);
             break;
 
-          case callbackPayload.VALIDATOR_STATS:
+          case CallbackPayload.VALIDATOR_STATS:
             logger.debug(`Editing the message...`);
             await this.handleValidatorCommand(ctx);
             break;

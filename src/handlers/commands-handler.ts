@@ -90,7 +90,7 @@ export class CommandsHandler {
   async handleNodeCommand(ctx: MyMessageContext): Promise<void> {
     try {
       await ctx.sendChatAction("typing");
-      const peerId = ctx.update?.message?.text?.split(" ")[1];
+      const peerId = ctx.update?.message?.text?.trim().split(/\s+/)[1];
       if (!this.validateInput(peerId, Input.PEER_ID)) {
         const message = format`${code("Please enter a valid Peer ID.\n\nExample:\n/node 16Uiu2HAm2t758uSrVxEoPQPLQaWD6aNqWMTw32rKsRDQfoGTMWyP")}`;
         await ctx.reply(message);
@@ -112,7 +112,7 @@ export class CommandsHandler {
     try {
       if (!isCallbackContext) {
         await ctx.sendChatAction("typing");
-        address = ctx.update?.message?.text?.split(" ")[1]?.toLowerCase();
+        address = ctx.update?.message?.text?.trim().split(/\s+/)[1]?.toLowerCase();
         if (!this.validateInput(address, Input.ETH_ADDRESS)) {
           const message = format`${code("Please enter a valid wallet address.\n\nExample:\n/validator 0x1234567890abcdef1234567890abcdef12345678")}`;
           await ctx.reply(message);
@@ -120,7 +120,7 @@ export class CommandsHandler {
         }
         await this.cacheHandler.delete(`${CacheKeys.VALIDATOR_STATS}:${address}`);
       } else {
-        address = (ctx.update?.callback_query?.message as TelegramMessage).reply_to_message?.text?.split(" ")[1]?.toLowerCase();
+        address = (ctx.update?.callback_query?.message as TelegramMessage).reply_to_message?.text?.trim().split(/\s+/)[1]?.toLowerCase();
         if (!this.validateInput(address, Input.ETH_ADDRESS)) {
           throw new Error("Impossible to get address from callback query.");
         }
@@ -144,7 +144,7 @@ export class CommandsHandler {
   async handleQueueCommand(ctx: MyMessageContext): Promise<void> {
     try {
       await ctx.sendChatAction("typing");
-      const address = ctx.update?.message?.text?.split(" ")[1]?.toLowerCase();
+      const address = ctx.update?.message?.text?.trim().split(/\s+/)[1]?.toLowerCase();
       if (!this.validateInput(address, Input.ETH_ADDRESS)) {
         const message = format`${code("Please enter a valid wallet address.\n\nExample:\n/queue 0x1234567890abcdef1234567890abcdef12345678")}`;
         await ctx.reply(message);

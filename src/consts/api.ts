@@ -2,7 +2,6 @@ import { config } from "dotenv";
 config();
 
 export const API = {
-  PROXY_AGENT: process.env.PROXY_AGENT!,
   NETWORK_HEALTH: process.env.NETWORK_HEALTH_API!,
   ACTIVE_NODES_BY_COUNTRY: process.env.ACTIVE_NODES_BY_COUNTRY_API!,
   ACTIVE_NODES: process.env.ACTIVE_NODES_API!,

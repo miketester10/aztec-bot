@@ -51,7 +51,7 @@
    ```
 2. **Install dependencies:**
    ```bash
-   pnpm install
+   npm install
    ```
 3. **Configure environment variables:**
    - Copy `.env.example` to `.env` in the project root and fill in the required values (see below).
@@ -61,7 +61,7 @@
    - Or use your own Redis instance.
 5. **Run the bot in development:**
    ```bash
-   pnpm run dev
+   npm run dev
    ```
 6. **Or run with Docker:**
    ```bash
@@ -93,8 +93,8 @@ REDIS_PASSWORD=your_redis_password
 
 ### Main Scripts
 
-- `pnpm run dev` — Start the bot in development mode (hot reload)
-- `pnpm start` — Start the bot in production mode
+- `npm run dev` — Start the bot in development mode (hot reload)
+- `npm start` — Start the bot in production mode
 
 ### Docker
 

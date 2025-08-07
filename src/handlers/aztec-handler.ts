@@ -138,11 +138,9 @@ export class AztecHandler {
       });
 
       proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
-
+      logger.debug(result.data);
       const validatorInQueue = result.data.validatorsInQueue;
       if (!(validatorInQueue.length > 0)) throw new Error("Validator not found in queue.");
-
-      logger.info(`Validators in queue: ${result.data.validatorsInQueue.length}`);
 
       return validatorInQueue[0];
     } catch (error) {

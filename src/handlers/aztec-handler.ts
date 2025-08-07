@@ -132,19 +132,19 @@ export class AztecHandler {
   async getValidatorInQueue(address: string): Promise<ValidatorInQueue> {
     try {
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
-      const result = await axios.get<ValidatorsInQueueResponse>(API.VALIDATORS_IN_QUEUE, {
+      const result = await axios.get<ValidatorsInQueueResponse>(`${API.VALIDATORS_IN_QUEUE}${address}`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
       });
 
       proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
-      const validatorInQueue = result.data.validatorsInQueue.find((validator: ValidatorInQueue) => validator.address === address);
-      if (!validatorInQueue) throw new Error("Validator not found in queue.");
+      const validatorInQueue = result.data.validatorsInQueue;
+      if (!(validatorInQueue.length > 0)) throw new Error("Validator not found in queue.");
 
       logger.info(`Validators in queue: ${result.data.validatorsInQueue.length}`);
 
-      return validatorInQueue;
+      return validatorInQueue[0];
     } catch (error) {
       throw error;
     }
@@ -407,7 +407,6 @@ export class AztecHandler {
       format`🔷 ${bold("VALIDATOR IN QUEUE")} 🔷
 
       📍 ${bold("Position:")} ${code(rawData.position)}
-      ⏳ ${bold("ETA:")} ${code(eta)}
       🕒 ${bold("Queued Since:")} ${code(formattedQueuedAt)} 
       🔑 ${bold("Address:")} ${code(rawData.address)} 
       🔗 ${bold(" Transaction Hash:")} ${code(rawData.transactionHash)}

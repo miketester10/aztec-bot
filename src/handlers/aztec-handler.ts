@@ -23,6 +23,7 @@ import { MyMessageContext } from "../interfaces/custom-context.interface";
 import { CacheHandler } from "./cache-handler";
 import { CacheKeys } from "../enums/cache-keys.enum";
 import { ValidatorInQueue, ValidatorsInQueueResponse } from "../interfaces/validators-in-queue-response.interface";
+import { ethers } from "ethers";
 
 export class AztecHandler {
   private readonly PROXY_MODE: string = process.env.PROXY_MODE!;
@@ -304,6 +305,9 @@ export class AztecHandler {
         status = "N/A";
     }
 
+    const stakedAmount = Number(ethers.formatUnits(rawData.balance, 18)).toFixed(2);
+    const rewards = Number(ethers.formatUnits(rawData.unclaimedRewards, 18)).toFixed(2);
+
     const showRankingAndNetworkInfo = allValidators ? true : false;
     // Sort validators descending by performanceScore
     const sortedValidatorsDesc = allValidators?.validators.sort((a: Validator, b: Validator) => b.performanceScore - a.performanceScore);
@@ -367,7 +371,8 @@ export class AztecHandler {
       🔑 ${bold("Address:")} ${code(rawData.address)}
       💼 ${bold("Withdrawer Address:")} ${code(rawData.withdrawalCredentials)}
       🕒 ${bold("Activation:")} ${code(formattedActivationDate)}
-      💰 ${bold("Staked Amount:")} ${code("100.00 STK")}
+      💰 ${bold("Staked Amount:")} ${code(`${stakedAmount} STK`)}
+      🎁 ${bold("Rewards:")} ${code(`${rewards} STK`)}
       
       📊 ${bold("ATTESTATION PERFORMANCE")} 📊 
       ✅ ${bold("Successful:")} ${code(rawData.totalAttestationsSucceeded)}

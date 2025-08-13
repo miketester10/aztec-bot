@@ -42,9 +42,15 @@ export class AztecHandler {
     return AztecHandler._instance;
   }
 
+  /**
+   * Optimization:
+   * - Use `Promise.all` to execute both requests in parallel and fail quickly if problems occur.
+   */
   async getNetworkHealth(): Promise<NetworkHealthResponse> {
     try {
-      const [{ data: blocks }, { validators }] = await Promise.all([axios.get<Block[]>(API.NETWORK_HEALTH), this.getAllValidators()]);
+      const [blocksResponse, validatorsResponse] = await Promise.all([axios.get<Block[]>(API.NETWORK_HEALTH), this.getAllValidators()]);
+      const blocks = blocksResponse.data;
+      const validators = validatorsResponse.validators;
 
       logger.info(`Pending Block: ${blocks[5].height}, Proven Block: ${blocks[2].height}, Current Slot: ${blocks[5].header.globalVariables.slotNumber}`);
 
@@ -93,6 +99,11 @@ export class AztecHandler {
     }
   }
 
+  /**
+   * Optimization:
+   * - Both requests are initiated in parallel to reduce response times.
+   * - Use `Promise.allSettled` to explicitly handle success and failure cases separately.
+   */
   async getValidatorStats(validatorAddress: string): Promise<ValidatorStatsCombinedResponse> {
     const key = `${CacheKeys.VALIDATOR_STATS}:${validatorAddress}`;
 
@@ -101,30 +112,35 @@ export class AztecHandler {
       if (cache) return cache;
 
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
-      const result = await axios.get<ValidatorStatsResponse>(`${API.VALIDATORS_STATS}/${validatorAddress}`, {
+
+      // Start both requests immediately in parallel
+      const validatorStatsPromise = axios.get<ValidatorStatsResponse>(`${API.VALIDATORS_STATS}/${validatorAddress}`, {
         httpsAgent: proxyAgent,
         headers: browserHeaders,
       });
+      const allValidatorsPromise = this.getAllValidators();
 
-      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
+      // Waiting for the results
+      const [validatorStatsResult, allValidatorsResult] = await Promise.allSettled([validatorStatsPromise, allValidatorsPromise]);
 
-      logger.info(`Validator status: ${result.data.status}`);
-
-      let allValidators: AllValidatorsResponse | undefined;
-      try {
-        allValidators = await this.getAllValidators();
-      } catch (error) {
-        const unknownError = error as Error;
-        logger.error(`ERROR IN getAllValidators(): ${unknownError.message}`);
+      // If validatorStats fails → throw
+      if (validatorStatsResult.status === "rejected") {
+        throw validatorStatsResult.reason;
       }
 
+      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
+      logger.info(`Validator status: ${validatorStatsResult.value.data.status}`);
+
+      // If allValidators fails → undefined
+      const allValidators = allValidatorsResult.status === "fulfilled" ? allValidatorsResult.value : (logger.error(`ERROR IN getAllValidators(): ${allValidatorsResult.reason}`), undefined);
+
       const response: ValidatorStatsCombinedResponse = {
-        validatorStats: result.data,
+        validatorStats: validatorStatsResult.value.data,
         allValidators,
       };
 
       await this.cacheHandler.set<ValidatorStatsCombinedResponse>(key, response);
-      return { validatorStats: result.data, allValidators };
+      return response;
     } catch (error) {
       throw error;
     }

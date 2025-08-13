@@ -3,5 +3,5 @@ import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.i
 
 export type ValidatorStatsCombinedResponse = {
   validatorStats: ValidatorStatsResponse;
-  allValidators?: AllValidatorsResponse;
+  allValidators: AllValidatorsResponse | undefined;
 };

@@ -1,6 +1,6 @@
 export enum ValidatorStatus {
   ACTIVE = "Validating",
-  EXITED = "Exited",
+  EXITED = "Exiting",
 }
 
 export enum ValidatorStatusByAztec {

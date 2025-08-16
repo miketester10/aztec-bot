@@ -325,19 +325,17 @@ export class AztecHandler {
     const rewards = Number(ethers.formatUnits(rawData.unclaimedRewards, 18)).toFixed(2);
 
     const showRankingAndNetworkInfo = allValidators ? true : false;
-    // Sort validators descending by performanceScore
-    const sortedValidatorsDesc = allValidators?.validators.sort((a: Validator, b: Validator) => b.performanceScore - a.performanceScore);
 
     let totalActiveValidators = 0;
     let totalInactiveValidators = 0;
 
     const validatorRank = { rank: -1, emoji: "" };
 
-    sortedValidatorsDesc?.forEach((validator, _index) => {
+    allValidators?.validators?.forEach((validator) => {
       // Find the rank and emoji for the target validator
       if (validator.address === rawData.address) {
-        validatorRank.rank = _index + 1;
-        validatorRank.emoji = _index === 0 ? "🥇" : _index === 1 ? "🥈" : _index === 2 ? "🥉" : "";
+        validatorRank.rank = validator.rank;
+        validatorRank.emoji = validator.rank === 1 ? "🥇" : validator.rank === 2 ? "🥈" : validator.rank === 3 ? "🥉" : "";
       }
 
       // Count active and inactive validators
@@ -412,7 +410,7 @@ export class AztecHandler {
   createFormattedMessageForValidatorInQueue(rawData: ValidatorInQueue): FormattableString {
     const formattedQueuedAt = this.formattingDate(rawData.queuedAt);
 
-    const VALIDATORS_ACTIVATED_PER_EPOCH = 15;
+    const VALIDATORS_ACTIVATED_PER_EPOCH = 30;
     const MINUTES_PER_EPOCH = 20;
     const MINUTES_PER_DAY = 1440;
     const MINUTES_PER_HOUR = 60;

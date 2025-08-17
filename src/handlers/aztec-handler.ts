@@ -317,6 +317,9 @@ export class AztecHandler {
       case ValidatorStatus.EXITED:
         status = ValidatorStatusMessage.EXITED;
         break;
+      case ValidatorStatus.ZOMBIE:
+        status = ValidatorStatusMessage.ZOMBIE;
+        break;
       default:
         status = "N/A";
     }
@@ -341,7 +344,7 @@ export class AztecHandler {
       // Count active and inactive validators
       if (validator.status === ValidatorStatus.ACTIVE) {
         totalActiveValidators++;
-      } else if (validator.status === ValidatorStatus.EXITED) {
+      } else if (validator.status === ValidatorStatus.EXITED || validator.status === ValidatorStatus.ZOMBIE) {
         totalInactiveValidators++;
       }
     });

@@ -1,6 +1,8 @@
 export enum ValidatorStatus {
   ACTIVE = "Validating",
   EXITED = "Exiting",
+  ZOMBIE = "Zombie",
+  NONE = "None",
 }
 
 export enum ValidatorStatusByAztec {
@@ -11,4 +13,6 @@ export enum ValidatorStatusByAztec {
 export enum ValidatorStatusMessage {
   ACTIVE = "Active 🟢",
   EXITED = "Exited 🔴",
+  ZOMBIE = "Zombie 🧟‍♂️",
+  NONE = "None ⚠️",
 }

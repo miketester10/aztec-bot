@@ -2,6 +2,7 @@ import { ValidatorBase } from "./validator-base.interface";
 
 export interface AllValidatorsResponse {
   validators: Validator[];
+  statuses: Status[];
 }
 
 export interface Validator extends ValidatorBase {
@@ -9,4 +10,9 @@ export interface Validator extends ValidatorBase {
   lastProposed: string;
   performanceScore: number;
   rank: number;
+}
+
+export interface Status {
+  status: string;
+  count: number;
 }

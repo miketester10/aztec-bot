@@ -1,7 +1,7 @@
 import axios, { AxiosError, RawAxiosRequestHeaders } from "axios";
 import { ValidatorStatsResponse } from "../interfaces/validator-stats-response.interface";
 import { ValidatorStatsCombinedResponse } from "../types/validator-stats-combined-response.type";
-import { AllValidatorsResponse, Validator } from "../interfaces/all-validators-response.interface";
+import { AllValidatorsResponse, Status, Validator } from "../interfaces/all-validators-response.interface";
 import { TopValidatorsResponse, TopValidator } from "../interfaces/top-validators-response.interface";
 import { CurrentEpochStatsResponse } from "../interfaces/current-epoch-stats-response.interface";
 import { ErrorResponse } from "../interfaces/error-response.interface";
@@ -320,36 +320,26 @@ export class AztecHandler {
       case ValidatorStatus.ZOMBIE:
         status = ValidatorStatusMessage.ZOMBIE;
         break;
+      case ValidatorStatus.NONE:
+        status = ValidatorStatusMessage.NONE;
       default:
         status = "N/A";
     }
 
-    const stakedAmount = Number(ethers.formatUnits(rawData.balance, 18)).toFixed(2);
-    const rewards = Number(ethers.formatUnits(rawData.unclaimedRewards, 18)).toFixed(2);
-
-    const showRankingAndNetworkInfo = allValidators ? true : false;
-
     let totalActiveValidators = 0;
     let totalInactiveValidators = 0;
 
-    const validatorRank = { rank: -1, emoji: "" };
-
-    allValidators?.validators?.forEach((validator) => {
-      // Find the rank and emoji for the target validator
-      if (validator.address === rawData.address) {
-        validatorRank.rank = validator.rank;
-        validatorRank.emoji = validator.rank === 1 ? "🥇" : validator.rank === 2 ? "🥈" : validator.rank === 3 ? "🥉" : "";
-      }
-
-      // Count active and inactive validators
-      if (validator.status === ValidatorStatus.ACTIVE) {
-        totalActiveValidators++;
-      } else if (validator.status === ValidatorStatus.EXITED || validator.status === ValidatorStatus.ZOMBIE) {
-        totalInactiveValidators++;
+    allValidators?.statuses.forEach((s: Status) => {
+      if (s.status === ValidatorStatus.ACTIVE) {
+        totalActiveValidators = s.count;
+      } else if (s.status === ValidatorStatus.EXITED || s.status === ValidatorStatus.ZOMBIE) {
+        totalInactiveValidators += s.count;
       }
     });
 
-    const formattingRank = (obj: typeof validatorRank): string => (obj.rank === -1 ? "N/A" : `${obj.rank}`);
+    const stakedAmount = Number(ethers.formatUnits(rawData.balance, 18)).toFixed(2);
+    const rewards = Number(ethers.formatUnits(rawData.unclaimedRewards, 18)).toFixed(2);
+
     const formattingRate = (rate: number): string => (isNaN(rate) ? "N/A" : `${rate.toFixed(1)}%`);
 
     const attestationSuccessRate = (rawData.totalAttestationsSucceeded / (rawData.totalAttestationsSucceeded + rawData.totalAttestationsMissed)) * 100;
@@ -360,7 +350,6 @@ export class AztecHandler {
 
     const proposalMissRate = 100 - proposalSuccessRate;
 
-    const formattedRank = formattingRank(validatorRank);
     const formattedActivationDate = this.formattingDate(rawData.activationDate);
     const formattedRate = {
       attestationSuccessRate: formattingRate(attestationSuccessRate),
@@ -369,20 +358,9 @@ export class AztecHandler {
       proposalMissRate: formattingRate(proposalMissRate),
     };
 
-    const statusAndRankingTemplate = showRankingAndNetworkInfo
-      ? format`ℹ️ ${bold("Status:")} ${status} 
-               🏆 ${bold("Ranking:")} ${code(`${formattedRank}${validatorRank.emoji}`)}`
-      : format`ℹ️ ${bold("Status:")} ${status}`;
-
-    const networkInfoTemplate = showRankingAndNetworkInfo
-      ? format`🌐 ${bold("NETWORK INFO")} 🌐
-      🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
-      🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}`
-      : "";
-
     const message = format`${blockquote(format`🔷 ${bold("VALIDATOR DETAILS")} 🔷
 
-      ${statusAndRankingTemplate}
+      ℹ️ ${bold("Status:")} ${status}
 
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
@@ -403,7 +381,13 @@ export class AztecHandler {
       📈 ${bold("Success Rate:")} ${code(formattedRate.proposalSuccessRate)}
       📉 ${bold("Miss Rate:")} ${code(formattedRate.proposalMissRate)}
       
-      ${networkInfoTemplate}
+      ${
+        allValidators
+          ? format`🌐 ${bold("NETWORK INFO")} 🌐
+            🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
+            🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}`
+          : ""
+      }
 
     `)}`;
 

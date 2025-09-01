@@ -1,4 +1,4 @@
-import { Bot } from "gramio";
+import { Bot, code } from "gramio";
 import { MyMessageContext, MyCallbackQueryContext } from "./interfaces/custom-context.interface";
 import { CommandsHandler } from "./handlers/commands-handler";
 import { ServerHandler } from "./handlers/server-handler";
@@ -25,10 +25,14 @@ bot.command("network_health", async (ctx: MyMessageContext) => {
   await commandsHandler.newtworkHealth(ctx);
 });
 bot.command("active_nodes", async (ctx: MyMessageContext) => {
-  await commandsHandler.activeNodesByCountry(ctx);
+  const message = code("⚠️ The command will be available again in the next bot update.");
+  await ctx.reply(message);
+  // await commandsHandler.activeNodesByCountry(ctx);
 });
 bot.command("node", async (ctx: MyMessageContext) => {
-  await commandsHandler.handleNodeCommand(ctx);
+  const message = code("⚠️ The command will be available again in the next bot update.");
+  await ctx.reply(message);
+  // await commandsHandler.handleNodeCommand(ctx);
 });
 bot.command("validator", async (ctx: MyMessageContext) => {
   await commandsHandler.handleValidatorCommand(ctx);

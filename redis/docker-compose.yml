@@ -10,7 +10,7 @@ services:
       - .env # file locale nella cartella corrente redis
     environment:
       - TZ=Europe/Rome # Imposta la variabile TimeZone per avere l'orario italiano nei logs
-    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    command: ["redis-server", "--bind",  "0.0.0.0",  "--requirepass", "${REDIS_PASSWORD}"]
     restart: unless-stopped
     mem_limit: 250m
     memswap_limit: 250m    

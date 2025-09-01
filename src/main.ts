@@ -25,12 +25,12 @@ bot.command("network_health", async (ctx: MyMessageContext) => {
   await commandsHandler.newtworkHealth(ctx);
 });
 bot.command("active_nodes", async (ctx: MyMessageContext) => {
-  const message = code("⚠️ The command will be available again in the next bot update.");
+  const message = code("⚠️ The command will be available again in the next bot update. Stay Tuned.");
   await ctx.reply(message);
   // await commandsHandler.activeNodesByCountry(ctx);
 });
 bot.command("node", async (ctx: MyMessageContext) => {
-  const message = code("⚠️ The command will be available again in the next bot update.");
+  const message = code("⚠️ The command will be available again in the next bot update. Stay Tuned.");
   await ctx.reply(message);
   // await commandsHandler.handleNodeCommand(ctx);
 });

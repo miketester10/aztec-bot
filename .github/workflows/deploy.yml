@@ -14,15 +14,13 @@ jobs:
       - name: 📦 Clona il repository
         uses: actions/checkout@v4
 
-      - name: 🔐 Aggiunge la chiave SSH privata
+      - name: 🚀 Deploy via SSH al VPS (con riavvio Container solo se necessario)
         run: |
-          echo "${{ secrets.VPS_SSH_KEY }}" > /tmp/ssh_key
-          chmod 600 /tmp/ssh_key
+          echo "📦 Installo sshpass..."
+          sudo apt-get update && sudo apt-get install -y sshpass
 
-      - name: 🚀 Deploy via SSH alla VPS (con riavvio Container solo se necessario)
-        run: |
-          echo "🔐 Connessione SSH alla VPS..."
-          ssh -i /tmp/ssh_key -o StrictHostKeyChecking=no "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+          echo "🔐 Connessione SSH al VPS..."
+          sshpass -p "${{ secrets.VPS_PASSWORD }}" ssh -o StrictHostKeyChecking=no "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
 
             echo "📁 [1/4] Entrata nella directory del progetto..."
             cd /home/ubuntu/aztec-bot  # Modifica se la tua directory è diversa

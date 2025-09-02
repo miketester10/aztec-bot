@@ -23,7 +23,8 @@ jobs:
           sshpass -p "${{ secrets.VPS_PASSWORD }}" ssh -o StrictHostKeyChecking=no "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
 
             echo "📁 [1/4] Entrata nella directory del progetto..."
-            cd /home/ubuntu/aztec-bot  # Modifica se la tua directory è diversa
+            # cd /home/ubuntu/aztec-bot  # Percorso directory su vps AWS
+            cd /root/aztec-bot           # Percorso directory su vps ServaRica
 
             echo "📥 [2/4] Eseguo git pull..."
             OUTPUT=$(git pull origin main)

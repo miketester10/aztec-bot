@@ -1,8 +1,8 @@
-import { Validator } from "./all-validators-response.interface";
+import { AllValidatorsResponse } from "./all-validators-response.interface";
 
 export interface NetworkHealthResponse {
   blocks: Block[];
-  validators: Validator[];
+  validators: AllValidatorsResponse;
 }
 
 export interface Block {

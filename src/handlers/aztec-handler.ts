@@ -48,7 +48,7 @@ export class AztecHandler {
     try {
       const [blocksResponse, validatorsResponse] = await Promise.all([axios.get<Block[]>(API.NETWORK_HEALTH), this.getAllValidators()]);
       const blocks = blocksResponse.data;
-      const validators = validatorsResponse.validators;
+      const validators = validatorsResponse;
 
       logger.info(`Pending Block: ${blocks[5].height}, Proven Block: ${blocks[2].height}, Current Slot: ${blocks[5].header.globalVariables.slotNumber}`);
 
@@ -180,12 +180,11 @@ export class AztecHandler {
     let totalActiveValidators = 0;
     let totalInactiveValidators = 0;
 
-    validators.forEach((validator: Validator) => {
-      // Count active and inactive validators
-      if (validator.status === ValidatorStatus.ACTIVE) {
-        totalActiveValidators++;
-      } else if (validator.status === ValidatorStatus.EXITED) {
-        totalInactiveValidators++;
+    validators?.statuses.forEach((s: Status) => {
+      if (s.status === ValidatorStatus.ACTIVE) {
+        totalActiveValidators = s.count;
+      } else if (s.status === ValidatorStatus.EXITED || s.status === ValidatorStatus.ZOMBIE) {
+        totalInactiveValidators += s.count;
       }
     });
 

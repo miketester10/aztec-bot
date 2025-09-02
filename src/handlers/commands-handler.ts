@@ -32,14 +32,6 @@ export class CommandsHandler {
             description: "Network health info",
           },
           {
-            command: "active_nodes",
-            description: "Active nodes info",
-          },
-          {
-            command: "node",
-            description: "<peer_id> - Node info",
-          },
-          {
             command: "validator",
             description: "<wallet_address> - Validator stats",
           },
@@ -70,35 +62,6 @@ export class CommandsHandler {
       await ctx.sendChatAction("typing");
       const result = await this.aztecHandler.getNetworkHealth();
       const message = this.aztecHandler.createFormattedMessageForNetworkHealth(result);
-      await ctx.reply(message);
-    } catch (error) {
-      await this.handleError(error, ctx);
-    }
-  }
-
-  async activeNodesByCountry(ctx: MyMessageContext): Promise<void> {
-    try {
-      await ctx.sendChatAction("typing");
-      const result = await this.aztecHandler.getActiveNodesByCountry();
-      const message = this.aztecHandler.createFormattedMessageForActiveNodesByCountry(result);
-      await ctx.reply(message);
-    } catch (error) {
-      await this.handleError(error, ctx);
-    }
-  }
-
-  async handleNodeCommand(ctx: MyMessageContext): Promise<void> {
-    try {
-      await ctx.sendChatAction("typing");
-      const peerId = ctx.update?.message?.text?.trim().split(/\s+/)[1];
-      if (!this.validateInput(peerId, Input.PEER_ID)) {
-        const message = format`${code("Please enter a valid Peer ID.\n\nExample:\n/node 16Uiu2HAm2t758uSrVxEoPQPLQaWD6aNqWMTw32rKsRDQfoGTMWyP")}`;
-        await ctx.reply(message);
-        return;
-      }
-
-      const result = await this.aztecHandler.getNodeInfo(peerId);
-      const message = this.aztecHandler.createFormattedMessageForNodeInfo(result);
       await ctx.reply(message);
     } catch (error) {
       await this.handleError(error, ctx);
@@ -226,8 +189,6 @@ ${blockquote(`⚠️ For more information contact the developer:
 
 ${blockquote(
   format`🔹${code("/network_health")} - to receive network health info
-🔹${code("/active_nodes")} - to receive active nodes info
-🔹${code("/node <peer_id>")} - to receive node info
 🔹${code("/validator <wallet_address>")} - to receive validator stats
 🔹${code("/queue <wallet_address>")} - to receive validator queue position
 🔹${code("/top10")} - to receive top 10 validators all time

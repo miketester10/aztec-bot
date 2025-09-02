@@ -10,8 +10,6 @@ import { logger } from "../logger/logger";
 import { blockquote, bold, code, format, FormattableString, italic } from "gramio";
 import { ValidatorStatus, ValidatorStatusMessage } from "../enums/validator-status.enum";
 import { Block, NetworkHealthResponse } from "../interfaces/network-health-response.interface";
-import { ActiveNodesByCountryResponse, Country } from "../interfaces/active-nodes-by-country-response.interface";
-import { NodeInfoResponse } from "../interfaces/node-info-response.interface";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import UserAgent from "user-agents";
 import { DateArg, format as formatDate } from "date-fns";
@@ -55,45 +53,6 @@ export class AztecHandler {
       logger.info(`Pending Block: ${blocks[5].height}, Proven Block: ${blocks[2].height}, Current Slot: ${blocks[5].header.globalVariables.slotNumber}`);
 
       return { blocks, validators };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async getActiveNodesByCountry(): Promise<ActiveNodesByCountryResponse> {
-    try {
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.NETHERMIND);
-      const result = await axios.get<ActiveNodesByCountryResponse>(API.ACTIVE_NODES_BY_COUNTRY, {
-        httpsAgent: proxyAgent,
-        headers: browserHeaders,
-      });
-
-      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
-
-      const activeNodes = result.data.countries.reduce((acc: number, country: Country) => acc + country.count, 0);
-      logger.info(`Active nodes: ${activeNodes}`);
-
-      return result.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async getNodeInfo(peerId: string): Promise<NodeInfoResponse> {
-    try {
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.NETHERMIND);
-      const result = await axios.get<NodeInfoResponse>(`${API.NODE_INFO}?id=${peerId}`, {
-        httpsAgent: proxyAgent,
-        headers: browserHeaders,
-      });
-
-      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
-
-      if (!result.data.peers) throw new Error("Peer ID not found.");
-
-      logger.info(`Peer ID: ${result.data.peers[0].id}`);
-
-      return result.data;
     } catch (error) {
       throw error;
     }
@@ -240,69 +199,6 @@ export class AztecHandler {
       🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
       🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}
         `
-    )}`;
-
-    return message;
-  }
-
-  createFormattedMessageForActiveNodesByCountry(rawData: ActiveNodesByCountryResponse): FormattableString {
-    const totalActiveNodes = rawData.countries.reduce((acc: number, country: Country) => acc + country.count, 0);
-
-    const countriesWithPercentage: Country[] = rawData.countries.map((c: Country) => {
-      const percentage = ((c.count / totalActiveNodes) * 100).toFixed(2);
-      return {
-        ...c,
-        percentage,
-      };
-    });
-
-    const top10Countries: Country[] = countriesWithPercentage.slice(0, 10);
-
-    const message = format`${blockquote(
-      format`🔷 ${bold("ACTIVE NODES INFO")} 🔷
-
-   ℹ️ ${bold("Total:")} ${code(`${totalActiveNodes}`)} 
-
-   🌍 ${bold("TOP 10 COUNTRIES")} 🌍
-    ${top10Countries.map((c: Country, _index: number) => {
-      let medal = "";
-      if (_index === 0) medal = "🥇";
-      else if (_index === 1) medal = "🥈";
-      else if (_index === 2) medal = "🥉";
-      else medal = "🔹";
-
-      return format`${bold(`${medal} ${c.country_name}:`)} ${code(`${c.count}`)} ${italic(`(${c.percentage}%)`)}\n`;
-    })}`
-    )}`;
-
-    return message;
-  }
-
-  createFormattedMessageForNodeInfo(rawData: NodeInfoResponse): FormattableString {
-    const version = rawData.peers![0].client;
-    const country = rawData.peers![0].multi_addresses[0].ip_info[0].country_name;
-    const city = rawData.peers![0].multi_addresses[0].ip_info[0].city_name;
-    const location = `${city ? `${country}, ${city}` : country}`;
-    const coordinate = `Lat. ${rawData.peers![0].multi_addresses[0].ip_info[0].latitude} - Long. ${rawData.peers![0].multi_addresses[0].ip_info[0].longitude}`;
-
-    const firstSeen = rawData.peers![0].created_at;
-    const lastSeen = rawData.peers![0].last_seen;
-
-    const formattedFirstSeen = this.formattingDate(firstSeen);
-    const formattedLastSeen = this.formattingDate(lastSeen);
-
-    const message = format`${blockquote(
-      format`🔷 ${bold("NODE INFO")} 🔷
-
-   ℹ️ ${bold("Version:")} ${code(`${version}`)} 
-   
-   🌍 ${bold("Location:")} ${code(`${location}`)}
-   🎯 ${bold("Coordinates:")} ${code(`${coordinate}`)}
-   
-   🌱 ${bold("First seen:")} ${code(`${formattedFirstSeen}`)}
-   👀 ${bold("Last seen:")} ${code(`${formattedLastSeen}`)}
-   
-   `
     )}`;
 
     return message;

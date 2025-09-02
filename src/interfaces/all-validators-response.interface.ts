@@ -3,6 +3,8 @@ import { ValidatorBase } from "./validator-base.interface";
 export interface AllValidatorsResponse {
   validators: Validator[];
   statuses: Status[];
+  totalPages: number;
+  currentPage: number;
 }
 
 export interface Validator extends ValidatorBase {

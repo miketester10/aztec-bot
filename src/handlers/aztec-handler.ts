@@ -22,6 +22,7 @@ import { CacheHandler } from "./cache-handler";
 import { CacheKeys } from "../enums/cache-keys.enum";
 import { ValidatorInQueue, ValidatorsInQueueResponse } from "../interfaces/validators-in-queue-response.interface";
 import { ethers } from "ethers";
+import pLimit from "p-limit";
 
 export class AztecHandler {
   private readonly PROXY_MODE: string = process.env.PROXY_MODE!;
@@ -253,9 +254,13 @@ export class AztecHandler {
       proposalMissRate: formattingRate(proposalMissRate),
     };
 
+    const validator = allValidators?.validators.filter((v) => v.address === rawData.address)[0];
+    const rank = validator?.rank;
+
     const message = format`${blockquote(format`🔷 ${bold("VALIDATOR DETAILS")} 🔷
 
       ℹ️ ${bold("Status:")} ${status}
+          ${bold("🏆 Ranking:")} ${code(rank || "N/A")}
 
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
@@ -276,13 +281,9 @@ export class AztecHandler {
       📈 ${bold("Success Rate:")} ${code(formattedRate.proposalSuccessRate)}
       📉 ${bold("Miss Rate:")} ${code(formattedRate.proposalMissRate)}
       
-      ${
-        allValidators
-          ? format`🌐 ${bold("NETWORK INFO")} 🌐
-            🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
-            🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}`
-          : ""
-      }
+      🌐 ${bold("NETWORK INFO")} 🌐
+      🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators || "N/A"}`)}
+      🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators || "N/A"}`)}
 
     `)}`;
 
@@ -377,25 +378,63 @@ ${code(
     return message;
   }
 
-  private async getAllValidators(): Promise<AllValidatorsResponse> {
+  private async getAllValidators(): Promise<any> {
     const key = `${CacheKeys.ALL_VALIDATORS}`;
 
     try {
       const cache = await this.cacheHandler.get<AllValidatorsResponse>(key);
       if (cache) return cache;
 
+      // Implementare logica con pLimit e Promise.allSettled() e vedere se funziona
+
       const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
-      const result = await axios.get<AllValidatorsResponse>(`${API.VALIDATORS_STATS}`, {
-        httpsAgent: proxyAgent,
-        headers: browserHeaders,
-      });
+      const mainRequest = await axios
+        .get<AllValidatorsResponse>(`${API.VALIDATORS_STATS}`, {
+          httpsAgent: proxyAgent,
+          headers: browserHeaders,
+        })
+        .then((result) => result.data);
 
       proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
-      logger.info(`Total validators: ${result.data.validators.length}`);
+      const requests = [];
+      const limit = pLimit(50); // Max 50 richieste parallele
+      for (let page = 1; page <= mainRequest.totalPages; page++) {
+        requests.push(
+          limit(
+            async () =>
+              await axios.get<AllValidatorsResponse>(`https://www.dashtec.xyz/api/validators?page=${page}&limit=200`, {
+                httpsAgent: proxyAgent,
+                headers: browserHeaders,
+              })
+          )
+        );
+      }
 
-      await this.cacheHandler.set<AllValidatorsResponse>(key, result.data, { ttl: 7200, smart: true });
-      return result.data;
+      const t1 = Date.now();
+      const results = await Promise.allSettled(requests);
+      const t2 = Date.now();
+
+      const elapsedSeconds = ((t2 - t1) / 1000).toFixed(2);
+      logger.debug(`Fetch API completato in ${elapsedSeconds}s`);
+
+      const fulfilledData = results
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value.data.validators)
+        .flat();
+      const rejectedData = results
+        .filter((result) => result.status === "rejected")
+        .map((result) => result.status)
+        .flat();
+
+      logger.info(`Fullfilled request: ${fulfilledData.length}`);
+      logger.error(`Rejected request: ${rejectedData.length}`);
+
+      mainRequest.validators = fulfilledData;
+      logger.info(`Total validators: ${mainRequest.validators.length}`);
+
+      await this.cacheHandler.set<AllValidatorsResponse>(key, mainRequest);
+      return mainRequest;
     } catch (error) {
       throw error;
     }

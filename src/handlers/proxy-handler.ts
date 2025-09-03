@@ -16,7 +16,9 @@ export class ProxyHandler {
     return ProxyHandler.instance;
   }
 
-  public getRandomProxyAgent(): HttpsProxyAgent<string> {
+  public getRandomProxyAgent(options?: { debugMode?: boolean }): HttpsProxyAgent<string> {
+    const debugMode = options?.debugMode ?? true; // Se non viene passato nulla, di default è true (undefined ?? true -> true). Mentre se viene passato false (false ?? true -> false), se viene passato true (true ?? true -> true)
+
     if (this.usedProxies.size === this.proxiesList.length) {
       this.usedProxies.clear();
     }
@@ -27,10 +29,12 @@ export class ProxyHandler {
 
     const [host, port, username, password] = randomProxy.split(":");
     const proxyUrl = `http://${username}:${password}@${host}:${port}`;
-    // logger.warn(`Proxy List lenght: ${this.proxiesList.length}`);
-    // logger.warn(`Used proxies lenght: ${this.usedProxies.size}`);
-    // logger.warn(Array.from(this.usedProxies));
-    logger.debug(`Using proxy: ${proxyUrl}`);
+    if (debugMode) {
+      // logger.warn(`Proxy List lenght: ${this.proxiesList.length}`);
+      // logger.warn(`Used proxies lenght: ${this.usedProxies.size}`);
+      // logger.warn(Array.from(this.usedProxies));
+      logger.debug(`Using proxy: ${proxyUrl}`);
+    }
 
     return new HttpsProxyAgent(proxyUrl);
   }

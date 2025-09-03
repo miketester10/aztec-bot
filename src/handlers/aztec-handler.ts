@@ -222,9 +222,11 @@ export class AztecHandler {
         status = "N/A";
     }
 
+    const validator = allValidators?.validators.filter((v) => v.address === rawData.address)[0];
+    const rank = validator ? (validator.rank === 1 ? `${validator.rank}🥇` : validator.rank === 2 ? `${validator.rank}🥈` : validator.rank === 3 ? `${validator.rank}🥉` : validator.rank) : "N/A";
+
     let totalActiveValidators = 0;
     let totalInactiveValidators = 0;
-
     allValidators?.statuses.forEach((s: Status) => {
       if (s.status === ValidatorStatus.ACTIVE) {
         totalActiveValidators = s.count;
@@ -254,13 +256,10 @@ export class AztecHandler {
       proposalMissRate: formattingRate(proposalMissRate),
     };
 
-    const validator = allValidators?.validators.filter((v) => v.address === rawData.address)[0];
-    const rank = validator?.rank;
-
     const message = format`${blockquote(format`🔷 ${bold("VALIDATOR DETAILS")} 🔷
 
       ℹ️ ${bold("Status:")} ${status}
-          ${bold("🏆 Ranking:")} ${code(rank || "N/A")}
+          ${bold("🏆 Ranking:")} ${code(rank)}
 
       📋 ${bold("BASIC INFO")} 📋
       🔑 ${bold("Address:")} ${code(rawData.address)}
@@ -382,67 +381,84 @@ ${code(
     const key = `${CacheKeys.ALL_VALIDATORS}`;
 
     try {
+      // 1️⃣ Controllo se i dati sono già in cache
       const cache = await this.cacheHandler.get<AllValidatorsResponse>(key);
       if (cache) return cache;
 
-      // Implementare logica con pLimit e Promise.allSettled() e vedere se funziona
+      // 2️⃣ Prima richiesta per ottenere il numero totale di pagine
+      const { proxyAgent: firstProxy, browserHeaders: firstHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
+      const mainResponse = await axios.get<AllValidatorsResponse>(`https://www.dashtec.xyz/api/validators?page=1&limit=200`, { httpsAgent: firstProxy, headers: firstHeaders });
+      const allValidatorsResponse = mainResponse.data; // contiene solo i validatori della prima pagina
 
-      const { proxyAgent, browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
-      const mainRequest = await axios
-        .get<AllValidatorsResponse>(`${API.VALIDATORS_STATS}`, {
-          httpsAgent: proxyAgent,
-          headers: browserHeaders,
-        })
-        .then((result) => result.data);
+      // Traccia l'IP usato per la prima richiesta
+      firstProxy && this.checkWichIPmadeRequest(firstProxy);
 
-      proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
+      // 3️⃣ Costruzione delle richieste per tutte le pagine
+      const requests: Array<Promise<Validator[]>> = [];
+      const limit = pLimit(200); // Limite di 200 richieste parallele
 
-      const requests = [];
-      const limit = pLimit(50); // Max 50 richieste parallele
-      for (let page = 1; page <= mainRequest.totalPages; page++) {
+      for (let page = 1; page <= allValidatorsResponse.totalPages; page++) {
+        // Ogni richiesta utilizza un proxy e headers diversi
+        const proxyAgent = this.proxyHandler.getRandomProxyAgent({ debugMode: false });
+        const { browserHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC, { debugMode: false });
+
         requests.push(
-          limit(
-            async () =>
-              await axios.get<AllValidatorsResponse>(`https://www.dashtec.xyz/api/validators?page=${page}&limit=200`, {
-                httpsAgent: proxyAgent,
-                headers: browserHeaders,
-              })
-          )
+          limit(async (): Promise<Validator[]> => {
+            try {
+              const response = await axios.get<AllValidatorsResponse>(`https://www.dashtec.xyz/api/validators?page=${page}&limit=200`, { httpsAgent: proxyAgent, headers: browserHeaders });
+              return response.data.validators; // ritorna sempre array di validatori
+            } catch (error) {
+              if (error instanceof AxiosError) {
+                logger.error(`Axios Error [${error.code}]: ${error.message}`);
+              } else {
+                logger.error(`Unknown Error: ${error}`);
+              }
+              // Se fallisce, ritorna array vuoto per non bloccare il flusso
+              return [];
+            }
+          })
         );
       }
 
+      // 4️⃣ Esecuzione di tutte le richieste parallele
       const t1 = Date.now();
-      const results = await Promise.allSettled(requests);
+      const results: Array<PromiseSettledResult<Validator[]>> = await Promise.allSettled(requests);
       const t2 = Date.now();
-
       const elapsedSeconds = ((t2 - t1) / 1000).toFixed(2);
-      logger.debug(`Fetch API completato in ${elapsedSeconds}s`);
 
-      const fulfilledData = results
-        .filter((result) => result.status === "fulfilled")
-        .map((result) => result.value.data.validators)
+      // 5️⃣ Calcolo pagine andate a buon fine e fallite
+      const successPages = results.filter((r: PromiseSettledResult<Validator[]>) => r.status === "fulfilled").length;
+      const failedPages = results.filter((r: PromiseSettledResult<Validator[]>) => r.status === "rejected").length;
+
+      // 6️⃣ Flatten della lista completa dei validatori
+      const fulfilledData: Validator[] = results
+        .filter((r: PromiseSettledResult<Validator[]>) => r.status === "fulfilled")
+        .map((r: PromiseFulfilledResult<Validator[]>) => r.value)
         .flat();
-      const rejectedData = results
-        .filter((result) => result.status === "rejected")
-        .map((result) => result.status)
-        .flat();
 
-      logger.info(`Fullfilled request: ${fulfilledData.length}`);
-      logger.error(`Rejected request: ${rejectedData.length}`);
+      // 7️⃣ Logging dettagliato
+      logger.debug(`Fetch API completed in ${elapsedSeconds}s`);
+      logger.debug(`Success Pages: ${successPages}`);
+      logger.debug(`Failed Pages: ${failedPages}`);
+      logger.debug(`Total Validators fetched: ${fulfilledData.length}`);
 
-      mainRequest.validators = fulfilledData;
-      logger.info(`Total validators: ${mainRequest.validators.length}`);
+      // 8️⃣ Aggiorno la risposta originale con tutti i validatori
+      allValidatorsResponse.validators = fulfilledData;
 
-      await this.cacheHandler.set<AllValidatorsResponse>(key, mainRequest);
-      return mainRequest;
+      // 9️⃣ Salvataggio in cache
+      await this.cacheHandler.set<AllValidatorsResponse>(key, allValidatorsResponse, { ttl: 14400 });
+
+      return allValidatorsResponse;
     } catch (error) {
       throw error;
     }
   }
 
-  private getProxyAgentAndBrowserHeaders(referer: string): ProxyAgentAndBrowserHeaders {
+  private getProxyAgentAndBrowserHeaders(referer: string, options?: { debugMode?: boolean }): ProxyAgentAndBrowserHeaders {
+    const debugMode = options?.debugMode ?? true;
+
     let proxyAgent: HttpsProxyAgent<string> | undefined;
-    if (this.PROXY_MODE === "active") {
+    if (this.PROXY_MODE === "active" && debugMode) {
       proxyAgent = this.proxyHandler.getRandomProxyAgent();
     }
 

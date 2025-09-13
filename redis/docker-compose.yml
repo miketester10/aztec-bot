@@ -12,8 +12,8 @@ services:
       - TZ=Europe/Rome # Imposta la variabile TimeZone per avere l'orario italiano nei logs
     command: ["redis-server", "--bind",  "0.0.0.0",  "--requirepass", "${REDIS_PASSWORD}"]
     restart: unless-stopped
-    mem_limit: 250m
-    memswap_limit: 250m    
+    mem_limit: 1000m
+    memswap_limit: 1000m
 
 volumes:
   redis-data:

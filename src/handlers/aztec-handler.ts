@@ -446,7 +446,7 @@ ${code(
       allValidatorsResponse.validators = fulfilledData;
 
       // 9️⃣ Salvataggio in cache
-      await this.cacheHandler.set<AllValidatorsResponse>(key, allValidatorsResponse, { ttl: 14400 });
+      await this.cacheHandler.set<AllValidatorsResponse>(key, allValidatorsResponse, { ttl: 43200 });
 
       return allValidatorsResponse;
     } catch (error) {

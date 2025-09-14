@@ -98,8 +98,42 @@ REDIS_PASSWORD=your_redis_password
 
 ### Docker
 
-- `docker-compose up -d` — Start bot and Redis in containers
-- `docker-compose down` — Stop and remove the containers
+- `docker compose up -d` — Start bot and Redis in containers
+- `docker compose down` — Stop and remove the containers
+
+### Logging
+
+The bot uses Pino for high-performance logging with the following configuration:
+
+- **Console Output**: Colorized and formatted logs with timestamps using `pino-pretty`
+- **File Logging**: Only error logs are saved to `logs/error.log` with the same formatting as console (without colors)
+- **Automatic Directory Creation**: The `logs/` directory is created automatically if it doesn't exist
+- **Log Levels**: Supports debug, info, warn, error, fatal, and trace levels
+
+#### Log Format
+
+**Console:**
+
+```
+[14-09-2025 02:23:15] INFO (201645): ✅ Webhook server ready on port 3000
+[14-09-2025 02:23:15] ERROR (201645): ❌ Server failed to start: listen EADDRINUSE: address already in use :::3000
+```
+
+**File (`logs/error.log`):**
+
+```
+[14-09-2025 02:23:15] ERROR (201645): ❌ Server failed to start: listen EADDRINUSE: address already in use :::3000
+```
+
+#### Usage
+
+```typescript
+import { logger } from "./src/logger/logger";
+
+logger.info("Application started");
+logger.error("Something went wrong");
+logger.debug("Debug information");
+```
 
 ### Input Validation
 
@@ -130,8 +164,10 @@ This script will launch ngrok, fetch the public URL, and update your `.env` file
 │   ├── consts/           # Constants (API endpoints)
 │   ├── enums/            # Enums (cache keys, callback payloads, input types, etc.)
 │   ├── schemas/          # Zod validation schemas
-│   ├── logger/           # Logging setup
+│   ├── logger/           # Logging setup with Pino
 │   └── main.ts           # Entry point
+├── logs/                 # Log files (auto-created)
+│   └── error.log         # Error logs only
 ├── redis/                # Redis docker-compose config and .env
 ├── .github/              # CI/CD workflows
 ├── docker-compose.yml    # Docker config

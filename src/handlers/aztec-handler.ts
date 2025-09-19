@@ -51,7 +51,7 @@ export class AztecHandler {
       const blocks = blocksResponse.data;
       const validators = validatorsResponse;
 
-      logger.info(`Pending Block: ${blocks[5].height}, Proven Block: ${blocks[2].height}, Current Slot: ${blocks[5].header.globalVariables.slotNumber}`);
+      logger.info(`Pending Block: ${blocks[2].height}, Proven Block: ${blocks[0].height}, Current Slot: ${blocks[2].header.globalVariables.slotNumber}`);
 
       return { blocks, validators };
     } catch (error) {
@@ -192,12 +192,12 @@ export class AztecHandler {
     const message = format`${blockquote(
       format`🔷 ${bold("NETWORK HEALTH")} 🔷
 
-      🏗️ ${bold("Pending Block:")} ${code(blocks[5].height)} 
-      🧱 ${bold("Proven Block:")} ${code(blocks[2].height)} 
-      🎰 ${bold("Current Slot:")} ${code(blocks[5].header.globalVariables.slotNumber)}
+      🏗️ ${bold("Pending Block:")} ${code(blocks[2].height)} 
+      🧱 ${bold("Proven Block:")} ${code(blocks[0].height)} 
+      🎰 ${bold("Current Slot:")} ${code(blocks[2].header.globalVariables.slotNumber)}
 
-      🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators}`)}
-      🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators}`)}
+      🟢 ${bold("Total Active Validators:")} ${code(`${totalActiveValidators || "N/A"}`)}
+      🔴 ${bold("Total Inactive Validators:")} ${code(`${totalInactiveValidators || "N/A"}`)}
         `
     )}`;
 

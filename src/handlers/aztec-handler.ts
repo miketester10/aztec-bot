@@ -292,7 +292,7 @@ export class AztecHandler {
   createFormattedMessageForValidatorInQueue(rawData: ValidatorInQueue): FormattableString {
     const formattedQueuedAt = this.formattingDate(rawData.queuedAt);
 
-    const VALIDATORS_ACTIVATED_PER_EPOCH = 30;
+    const VALIDATORS_ACTIVATED_PER_EPOCH = 32;
     const MINUTES_PER_EPOCH = 20;
     const MINUTES_PER_DAY = 1440;
     const MINUTES_PER_HOUR = 60;

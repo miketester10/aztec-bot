@@ -35,10 +35,7 @@ const consoleLogger = pino({
 
 // Logger combinato che stampa tutto in console e salva solo gli errori nei file
 class CombinedLogger {
-  constructor(private readonly consoleLogger: pino.Logger, private readonly fileLogger: pino.Logger) {
-    this.consoleLogger = consoleLogger;
-    this.fileLogger = fileLogger;
-  }
+  constructor(private readonly consoleLogger: pino.Logger, private readonly fileLogger: pino.Logger) {}
 
   debug(obj: any, msg?: string, ...args: any[]): void {
     this.consoleLogger.debug(obj, msg, ...args);

@@ -2,7 +2,7 @@ export interface ValidatorBase {
   index: string;
   address: string;
   status: string;
-  balance: string;
+  balance: number;
   attestationSuccess: string;
   totalAttestationsSucceeded: number;
   totalAttestationsMissed: number;

@@ -21,7 +21,7 @@ import { MyMessageContext } from "../interfaces/custom-context.interface";
 import { CacheHandler } from "./cache-handler";
 import { CacheKeys } from "../enums/cache-keys.enum";
 import { ValidatorInQueue, ValidatorsInQueueResponse } from "../interfaces/validators-in-queue-response.interface";
-import { ethers } from "ethers";
+import { Big } from "big.js";
 import pLimit from "p-limit";
 
 export class AztecHandler {
@@ -235,8 +235,8 @@ export class AztecHandler {
       }
     });
 
-    const stakedAmount = Number(ethers.formatUnits(rawData.balance, 18)).toFixed(2);
-    const rewards = Number(ethers.formatUnits(rawData.unclaimedRewards, 18)).toFixed(2);
+    const stakedAmount = new Big(rawData.balance).div(new Big(10).pow(18)).toFixed(2);
+    const rewards = new Big(rawData.unclaimedRewards).div(new Big(10).pow(18)).toFixed(2);
 
     const formattingRate = (rate: number): string => (isNaN(rate) ? "N/A" : `${rate.toFixed(1)}%`);
 

@@ -6,7 +6,7 @@ export interface ValidatorStatsResponse extends ValidatorBase {
   proposalHistory: ProposalHistory[];
   votingHistory: any[];
   epochPerformanceHistory: EpochPerformanceHistory[];
-  activationDate: string;
+  activationDate?: string;
   unclaimedRewards: string;
 }
 

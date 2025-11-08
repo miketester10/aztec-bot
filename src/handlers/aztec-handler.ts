@@ -117,7 +117,7 @@ export class AztecHandler {
       proxyAgent && this.checkWichIPmadeRequest(proxyAgent);
 
       const validatorInQueue = result.data.validatorsInQueue;
-      if (!(validatorInQueue.length > 0)) throw new Error("Validator not found in queue.");
+      if (!(validatorInQueue.length > 0)) throw new Error("Sequencer not found in queue.");
 
       const validatorFound = validatorInQueue[0];
       logger.info(`Validator found in queue. Position: ${validatorFound.position}`);
@@ -248,7 +248,7 @@ export class AztecHandler {
 
     const proposalMissRate = 100 - proposalSuccessRate;
 
-    const formattedActivationDate = this.formattingDate(rawData.activationDate);
+    const formattedActivationDate = rawData.activationDate ? this.formattingDate(rawData.activationDate) : "N/A";
     const formattedRate = {
       attestationSuccessRate: formattingRate(attestationSuccessRate),
       attestationMissRate: formattingRate(attestationMissRate),
@@ -292,8 +292,8 @@ export class AztecHandler {
   createFormattedMessageForValidatorInQueue(rawData: ValidatorInQueue): FormattableString {
     const formattedQueuedAt = this.formattingDate(rawData.queuedAt);
 
-    const VALIDATORS_ACTIVATED_PER_EPOCH = 32;
-    const MINUTES_PER_EPOCH = 20;
+    const VALIDATORS_ACTIVATED_PER_EPOCH = 4;
+    const MINUTES_PER_EPOCH = 40;
     const MINUTES_PER_DAY = 1440;
     const MINUTES_PER_HOUR = 60;
 
@@ -377,7 +377,7 @@ ${code(
     return message;
   }
 
-  private async getAllValidators(): Promise<any> {
+  private async getAllValidators(): Promise<AllValidatorsResponse> {
     const key = `${CacheKeys.ALL_VALIDATORS}`;
 
     try {
@@ -489,21 +489,26 @@ ${code(
   handleError(error: unknown): string {
     const defaultErrorMessage = "An error occurred. Please try again later.";
 
+    // Check if the error is an Axios error
     if (axios.isAxiosError(error)) {
       const customErrorMessage = (error as AxiosError<ErrorResponse>).response?.data.error;
       const errorMessage = customErrorMessage ? customErrorMessage : error.message;
       logger.error(`Axios Error: ${errorMessage}`);
 
-      if (customErrorMessage?.includes("Validator not found."))
-        return `${customErrorMessage}\n\nCheck if you're in the validators queue with the command:\n\n/queue <wallet_address>\n\nOtherwise, contact Aztec Team.`;
+      if (customErrorMessage?.includes("Validator not found.") || customErrorMessage?.includes("Sequencer not found."))
+        return `${customErrorMessage}\n\nCheck if you're in the sequencers queue with the command:\n\n/queue <wallet_address>\n\nOtherwise, contact Aztec Team.`;
 
       return defaultErrorMessage;
+    } else {
+      // If the error is not an Axios error, return the error message or default error message
+      const errorMessage = (error as Error).message;
+      logger.error(`Error: ${errorMessage}`);
+
+      if (errorMessage.includes("Peer ID not found.") || errorMessage.includes("Sequencer not found in queue.")) {
+        return errorMessage;
+      } else {
+        return defaultErrorMessage;
+      }
     }
-    const unknownErrorMessage = (error as Error).message;
-    logger.error(`Unknown Error: ${unknownErrorMessage}`);
-
-    if (unknownErrorMessage.includes("Peer ID not found.") || unknownErrorMessage.includes("Validator not found in queue.")) return unknownErrorMessage;
-
-    return defaultErrorMessage;
   }
 }

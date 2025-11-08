@@ -492,13 +492,13 @@ ${code(
     // Check if the error is an Axios error
     if (axios.isAxiosError(error)) {
       const customErrorMessage = (error as AxiosError<ErrorResponse>).response?.data.error;
-      const errorMessage = customErrorMessage ? customErrorMessage : error.message;
-      logger.error(`Axios Error: ${errorMessage}`);
+      logger.error(`Axios Error: ${customErrorMessage ? customErrorMessage : error.message}`);
 
-      if (customErrorMessage?.includes("Validator not found.") || customErrorMessage?.includes("Sequencer not found."))
+      if (customErrorMessage?.includes("Validator not found.") || customErrorMessage?.includes("Sequencer not found.")) {
         return `${customErrorMessage}\n\nCheck if you're in the sequencers queue with the command:\n\n/queue <wallet_address>\n\nOtherwise, contact Aztec Team.`;
-
-      return defaultErrorMessage;
+      } else {
+        return defaultErrorMessage;
+      }
     } else {
       // If the error is not an Axios error, return the error message or default error message
       const errorMessage = (error as Error).message;

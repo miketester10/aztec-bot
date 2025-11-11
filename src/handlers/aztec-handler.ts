@@ -387,7 +387,7 @@ ${code(
 
       // 2️⃣ Prima richiesta per ottenere il numero totale di pagine
       const { proxyAgent: firstProxy, browserHeaders: firstHeaders } = this.getProxyAgentAndBrowserHeaders(Referer.DASHTEC);
-      const mainResponse = await axios.get<AllValidatorsResponse>(`https://www.dashtec.xyz/api/validators?page=1&limit=200`, { httpsAgent: firstProxy, headers: firstHeaders });
+      const mainResponse = await axios.get<AllValidatorsResponse>(`https://testnet.dashtec.xyz/api/validators?page=1&limit=200`, { httpsAgent: firstProxy, headers: firstHeaders });
       const allValidatorsResponse = mainResponse.data; // contiene solo i validatori della prima pagina
 
       // Traccia l'IP usato per la prima richiesta
@@ -405,7 +405,7 @@ ${code(
         requests.push(
           limit(async (): Promise<Validator[]> => {
             try {
-              const response = await axios.get<AllValidatorsResponse>(`https://www.dashtec.xyz/api/validators?page=${page}&limit=200`, { httpsAgent: proxyAgent, headers: browserHeaders });
+              const response = await axios.get<AllValidatorsResponse>(`https://testnet.dashtec.xyz/api/validators?page=${page}&limit=200`, { httpsAgent: proxyAgent, headers: browserHeaders });
               return response.data.validators; // ritorna sempre array di validatori
             } catch (error) {
               if (error instanceof AxiosError) {
